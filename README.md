@@ -4,6 +4,7 @@
 
 - Work on personal stuff relating to the project in your own folder
 - Use the Python Black extension so we have consistent formatting
+- import numpy as np, import cv2 as cv2
 - Variable naming
   - CamelCase for classes
   - camelCase for functions
