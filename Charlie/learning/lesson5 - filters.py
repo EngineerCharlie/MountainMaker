@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
+import ImageTools
 
-for i in range(1, 2):
-    filename = "night-sky" + str(i) + ".jpg"
+for i in range(1, 5):
+    filename = "Charlie/night-sky" + str(i) + ".jpg"
     img = cv2.imread(filename)
     img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -77,10 +78,16 @@ for i in range(1, 2):
     skt = cv2.cvtColor(thresholded, cv2.COLOR_GRAY2BGR)
     # join images to make cartoon??
     # filtered_img = cv2.addWeighted(color_img, 0.8, skt, 0.2, 0)
-    filtered_img = cv2.bitwise_and(color_img, skt)
-
+    canny = cv2.cvtColor(cv2.Canny(img, 50, 200, None, 3), cv2.COLOR_GRAY2BGR)
+    canny = ImageTools.flood_fill(canny, [0, 0], (255, 0, 0))
+    redCol = ImageTools.reduce_colors(img, 5)
+    # filtered_img = cv2.bitwise_and(redCol, canny)
+    # filtered_img = cv2.addWeighted(redCol, 1, canny, 0.5, 0)
     cv2.resize(skt, None, fx=0.5, fy=0.5)
     cv2.imshow("ORIGINAL", color_img)
     cv2.imshow("Image", skt)
+    cv2.imshow("Cannyd", canny)
+    cv2.imshow("red cols", redCol)
+    # cv2.imshow("Filtered", filtered_img)
 
     cv2.waitKey(0)

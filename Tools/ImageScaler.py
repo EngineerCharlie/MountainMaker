@@ -1,11 +1,13 @@
 import cv2
 
+
 def resize_and_center_crop(image_path, target_width=800, target_height=600):
     # Read the image
     image = cv2.imread(image_path)
 
     # Get the dimensions of the original image
     original_height, original_width = image.shape[:2]
+    # TODO: Should it upscale or should it discard upscales?
 
     # Calculate the aspect ratio of the original image
     aspect_ratio = original_width / original_height
@@ -42,12 +44,3 @@ def load_and_save_scaled_image(inputPath, outputPath):
     resizedImage = resize_and_center_crop(inputPath)
     # Save the resized image
     cv2.imwrite(outputPath, resizedImage)
-
-
-# Example usage:
-input_image_path = "Charlie/night-sky3.jpg"
-output_image_path = "Charlie/output_image.jpg"
-resized_image = resize_and_center_crop(input_image_path)
-
-# Save the resized image
-cv2.imwrite(output_image_path, resized_image)
