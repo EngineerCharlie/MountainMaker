@@ -1,5 +1,3 @@
-import cv2
-
 
 def resize_and_center_crop(image_path, target_width=800, target_height=600):
     # Read the image
@@ -10,20 +8,21 @@ def resize_and_center_crop(image_path, target_width=800, target_height=600):
     # TODO: Should it upscale or should it discard upscales?
 
     # Calculate the aspect ratio of the original image
-    aspect_ratio = original_width / original_height
+    aspect_ratio = original_width / original_height #16:9
 
     # Calculate the aspect ratio of the target size
-    target_aspect_ratio = target_width / target_height
+    target_aspect_ratio = target_width / target_height #4:3
 
     # Determine whether to resize based on width or height
-    if aspect_ratio > target_aspect_ratio:
-        # Resize based on width
-        new_width = target_width
-        new_height = int(target_width / aspect_ratio)
-    else:
-        # Resize based on height
+    if aspect_ratio >= target_aspect_ratio:
+        #old image is height limited so resize based on height
         new_height = target_height
         new_width = int(target_height * aspect_ratio)
+        # Resize based on width
+    else:
+        # Old image is width limited so resize based on width
+        new_width = target_width
+        new_height = int(target_width / aspect_ratio)
 
     # Resize the image
     resized_image = cv2.resize(image, (new_width, new_height))
