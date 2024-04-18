@@ -1,3 +1,4 @@
+import cv2 
 
 def resize_and_center_crop(image_path, target_width=800, target_height=600):
     # Read the image

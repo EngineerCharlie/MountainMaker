@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 import ImageTools
 
-for i in range(1, 5):
-    filename = "Charlie/night-sky-scld-" + str(i) + ".jpg"
+for i in range(0, 24):
+    filename = "testdata/scaled/Mountain-" + str(i) + ".jpg"
     img = cv2.imread(filename)
 
     # img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
