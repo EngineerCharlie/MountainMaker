@@ -1,2 +1,6 @@
 
 *.pyc
+/Charlie/learning/GAN/maps/train
+/Charlie/learning/GAN/maps/val
+Charlie/learning/GAN/maps/train.zip
+Charlie/learning/GAN/maps/val.zip
