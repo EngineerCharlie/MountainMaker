@@ -2,15 +2,29 @@
 import cv2
 from cv2.typing import MatLike, Point, Size
 import numpy as np
+import enum
+import math
+
+class CColor(enum.Enum):
+    SKY = 0
+    MOUNTAIN = 1
+    FOREST = 2
+    SNOW = 3
+    CLOUD = 4
+    GRASS = 5
 
 class ColorConverter(object):
 
+    #np.array([19, 69, 139]),  # brown for mountain
+    #np.array([175, 175, 175]),  # light gray for clouds
+
     colorList = [
-        np.array([0, 255, 0]),  # light green for grass
+        np.array([255, 0, 0]),  # blue for sky
+        np.array([30, 30, 30]),  # dark gray for mountain
         np.array([0, 128, 0]),  # dark green for forest
-        np.array([139, 69, 19]),  # brown for mountain
         np.array([255, 255, 255]),  # white for snow
-        np.array([255, 0, 0])  # blue for sky
+        np.array([255, 255, 255]),  # light gray for clouds
+        np.array([0, 255, 0]),  # light green for grass
     ]
 
     def rgb_to_lab(color):
@@ -56,7 +70,7 @@ class ColorConverter(object):
     
     skyblue = (255, 191, 0)
     
-    def closest_color(input_color, color_list = colorList):
+    def GetClosestColor(input_color, color_list = colorList):
         """
         Find the color in the color_list that is closest to the input_color.
         """
@@ -70,11 +84,82 @@ class ColorConverter(object):
         
         return closest_color
 
-    def closest_color2(color, color_list = colorList):
+    def GetClosestColor2(color:tuple, centroid:tuple, YParam:tuple, color_list = colorList):
+        
+        #without considering centroid and YParams:
+        '''
         color_list = np.array(color_list)
         color = np.array(color)
         distances = np.sqrt(np.sum((color_list-color)**2,axis=1))
-        index_of_smallest = np.where(distances==np.amin(distances))
+        #index_of_smallest = np.where(distances==np.amin(distances))
+        index_of_smallest = np.argmin(distances)
         smallest_distance = color_list[index_of_smallest]
+        '''
+
+        color_list = np.array(color_list) #shape 4x3
+        color = np.array(color) #shape 3x1 I guess
+
+        #distances is a list of values in the order: SKY, MOUNTAIN, FOREST, SNOW, CLOUD
+        distances = np.sqrt(np.sum((color_list-color)**2,axis=1))
+
+        #print(distances)
+        #print(YParam)
+
+        #in terms of logic
+        #YParam[0] is the highest position of the region
+        #YParam[1] is the lowest position of the region
+        #but the highest position is a smaller number because we count the position from the top left corner
+
+        #normalize the centroid Y value-> the top is 0.5 and the bottom is 1
+
+        # we multiply by the normalized centroid for sky identification: the distance to sky is smaller the close you are to the top
         
+        '''
+        mapped_centroid_SKY = 0.3 + math.sqrt(centroid[1] / 220) * 0.7
+        mapped_centroid_CLOUD = 0.5 + math.sqrt(centroid[1] / 220) * 0.5
+        mapped_centroid_SNOW = 2.5 - math.sqrt(centroid[1] / 230) * 1
+
+
+        distances[CColor.SKY.value] = distances[CColor.SKY.value] * mapped_centroid_SKY
+
+        distances[CColor.CLOUD.value] = distances[CColor.CLOUD.value] * mapped_centroid_CLOUD
+
+        distances[CColor.SNOW.value] = distances[CColor.SNOW.value] * mapped_centroid_SNOW
+        '''
+
+
+        
+        if(YParam[0] < 5):
+            distances[CColor.SKY.value] = distances[CColor.SKY.value]/2.5       #if the region is connected to the top IT IS VERY LIKELY TO BE SKY
+            distances[CColor.CLOUD.value] = distances[CColor.CLOUD.value]/1.25     #and IT IS VERY LIKELY TO BE CLOUD
+            distances[CColor.MOUNTAIN.value] = distances[CColor.MOUNTAIN.value]*2
+        elif(centroid[1] < 25):
+            distances[CColor.SKY.value] = distances[CColor.SKY.value]/2        #if the region is connected to the top IT IS LIKELY TO BE SKY
+            distances[CColor.CLOUD.value] = distances[CColor.CLOUD.value]/1.1     #and IT IS LIKELY TO BE CLOUD
+        else:
+            distances[CColor.SKY.value] = distances[CColor.SKY.value]*2        #if the region is connected to the top IT IS UNLIKELY TO BE SKY
+            distances[CColor.CLOUD.value] = distances[CColor.CLOUD.value]*2     #and IT IS UNLIKELY TO BE CLOUD
+
+
+
+        if (YParam[1] > 245):
+            distances[CColor.SKY.value] = 255 #if the region is connected to the bottom it CANNOT BE SKY
+            distances[CColor.CLOUD.value] = 255 #it cannot be cloud
+
+        if(centroid[1] > 100):
+            distances[CColor.CLOUD.value] = 255 # if the region is in above pos 200 it CANNOT BE CLOUD
+
+
+
+
+        index_of_smallest = np.argmin(distances)
+
+        '''
+        if(YParam[1] == 249):
+            index_of_smallest = 4 #if the region is connected to the top we choose to color it SKY no matter what
+        else:
+            index_of_smallest = np.argmin(distances)
+        '''
+
+        smallest_distance = color_list[index_of_smallest]   
         return smallest_distance 

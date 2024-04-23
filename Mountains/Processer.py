@@ -104,33 +104,33 @@ class PostProcesser(object):
 
         return output
     
-    def GetContours(image:MatLike, gray:MatLike, useMorph:bool, threshold1:int, threshold2:int, _thickness = 1) -> MatLike:
+    def GetConnectedEdges(image:MatLike, low_threshold:int, high_threshold:int) -> MatLike:
+        # Perform Canny edge detection
+        edges = cv2.Canny(image, low_threshold, high_threshold)
 
-        #cv2.addWeighted(im_gray, 10, dst = im_gray)
-        #inverted = 255-im_gray
-        #blurred = cv2.GaussianBlur(inverted, (17,17),0)
-        #invertedblur = 255-blurred
-        
-        #output = cv2.divide(im_gray, invertedblur, scale = 256.0)
-        
-        #cv2.threshold(output, 50, 255, 1, output)
-        
-        #output = cv2.Laplacian(output, cv2.CV_8U, ksize = 1)
+        # Create an output image to store the connected edges
+        connected_edges = np.zeros_like(edges)
 
-        #contour detection
-        #edges = cv2.Canny(image, 35, 150)
+        # Find strong edge pixels
+        strong_edges = (edges > high_threshold)
 
+        # Define the neighborhood for connecting weak edges
+        neighborhood = np.ones((7, 7), dtype=np.uint8)
 
-        '''
-        gray[0][0] = 255
-        gray[0][249] = 255
-        gray[249][0] = 255
-        gray[249][249] = 255
-        '''
+        # Compute the convolution of strong edges with the neighborhood
+        strong_edges_conv = cv2.filter2D(strong_edges.astype(np.uint8), -1, neighborhood)
 
+        # Connect weak edges to nearby strong edges
+        connected_edges[(edges > low_threshold) & (strong_edges_conv > 0)] = 255
 
+        return connected_edges
 
-        edges = cv2.Canny(gray, threshold1, threshold2)
+    def GetContours(image:MatLike, gray:MatLike, useMorph:bool, threshold1:int, threshold2:int, shape:int, strength:tuple,  connectWeak:bool=False, _thickness = 2) -> MatLike:
+
+        if(connectWeak):
+            edges = PostProcesser.GetConnectedEdges(gray, threshold1, threshold2)
+        else:
+            edges = cv2.Canny(gray, threshold1, threshold2)
 
         if(useMorph):
             #element = cv2.getStructuringElement(0, (1,1), (0, 0))
@@ -146,20 +146,16 @@ class PostProcesser(object):
             
             #kernel_cross = cv2.getStructuringElement(cv2.MORPH_OPEN, (3,3))
             #kernel_rect = np.ones((11,11), np.uint8)
-            cv2.morphologyEx(edges, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (5,5)), edges)
-            cv2.morphologyEx(edges, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9,9)), edges)
+            #cv2.morphologyEx(edges, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (7,7)), edges)
+            #cv2.morphologyEx(edges, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11,11)), edges)
+            cv2.morphologyEx(edges, cv2.MORPH_CLOSE, cv2.getStructuringElement(shape, strength), edges)
 
             #kernel_rect = np.ones((3,3), np.uint8)
             #cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel_rect, edges)
             #cv2.morphologyEx(edges, cv2.MORPH_DILATE, kernel_rect, edges)
-        
-        #print(edges)
 
 
-
-        #cv2.CONTOURS_MATCH_I3,
         (contours, b) = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
         
         '''
         # Create contours for the four sides of the image
@@ -177,41 +173,8 @@ class PostProcesser(object):
         '''
 
 
-        white = (255, 255, 255)
-        purple = (240, 32, 160)
-
-        #colored_image = image.copy()
-        #colored_image = np.ones_like(image, dtype=np.uint8)
+        white = (250, 250, 250)
         white_image = np.full(image.shape, white)
-        mean_colors = []
-        
-        # Create contours for the four edges of the image
-        '''
-        top_edge = np.array([[0, 0], [width, 0]])
-        bottom_edge = np.array([[0, height], [width, height]])
-        left_edge = np.array([[0, 0], [0, height]])
-        right_edge = np.array([[width, 0], [width, height]])
-        '''
-        top_edge = ((0, 0), (250, 0))
-        bottom_edge = ((0, 250), (250, 250))
-        left_edge = ((0, 0), (0, 250))
-        right_edge = ((250, 0), (250, 250))
-
-
-        # Add the edge contours to the contour list
-        #contours = contours + (top_edge)
-        #contours = contours + (bottom_edge)
-        #contours = contours + (left_edge)
-        #contours = contours + (right_edge)
-
-        #contours = contours + (0,0)
-        #contours = contours + (0,249)
-        #contours = contours + (249,0)
-        #contours = contours + (249,249)
-
-        #contours.append([(0, 0), (width - 1, 0), (width - 1, height - 1), (0, height - 1)])
-
-        #contours[0].append([[0, 0]])
 
         #print("num of contours: ", len(contours))
 
@@ -262,81 +225,92 @@ class PostProcesser(object):
         #print("INDEX 0 ", len(indexes), "shape: ", indexes.shape, " WHICH ARE: ", indexes)
         #while(len(indexes) > 1):
         final_image = np.full(image.shape, white)
-        
+        centroids = []
+
         for x in range(100):
             # Get the indices of white pixels in the colored_image
-            indexes = np.argwhere(np.all(white_image == [255, 255, 255], axis=-1))
+            indexes = np.argwhere(np.all(white_image == [250, 250, 250], axis=-1))
 
             if len(indexes) > 0:
-                print("INDEX  ", len(indexes), "shape: ", indexes.shape,  "WHICH ARE: ", indexes, " so first element is: ", (indexes[0][0], indexes[0][1]))
-
-                toSample = random.randint(0, len(indexes)-1)
+                #toSample = random.randint(0, len(indexes)-1)
+                toSample = 0
                 seed_point = (indexes[toSample][1], indexes[toSample][0])  # Note the reversal of x and y coordinates
-                fill_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+                #fill_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
                 mask = np.zeros((252,252), np.uint8)
                 #num, white_image, filled_mask, rect = cv2.floodFill(white_image, mask, seed_point, (100,100,100), loDiff=50, upDiff=100, flags = 4  | (255 << 8))
                 num, white_image, filled_mask, rect = cv2.floodFill(white_image, mask, seed_point, (0,0,0), loDiff=50, upDiff=100)
 
-                cv2.circle(white_image, seed_point, 4, (200,0,0), -1)
-            
-                #filled_mask = cv2.convertScaleAbs(filled_mask)
-                #filled_mask = filled_mask.astype(cv2.CV_8U)
-                print("ORIG SHAPE", white_image.shape, " MASK SHAPE: ", filled_mask.shape)
-                
-                print("mask ", filled_mask)
-                
+                #cv2.circle(white_image, seed_point, 4, (200,0,0), -1)
+
                 #original_size_mask = cv2.resize(filled_mask, (250, 250), interpolation=cv2.INTER_NEAREST)
                 original_size_mask = filled_mask[1:-1, 1:-1]
+                                
+                NumOfFilledPixels = cv2.countNonZero(original_size_mask)
+                if(NumOfFilledPixels > 50):
+                    filled_region = cv2.bitwise_and(image, image, mask=original_size_mask)
+                    mean_color = cv2.mean(filled_region, mask=original_size_mask)[:3]
+                    #cv2.floodFill(colored_image, None, seed_point, mean_color, 50, 100)
 
-                #_, binary_mask = cv2.threshold(filled_mask, 128, 255, cv2.THRESH_BINARY)
+                    #print("filled region shape: ------------------------------------------------- ", filled_region.shape, " ... ", original_size_mask.shape)
+                    centroid, Yparam = PostProcesser.CalculateRegionParameters(original_size_mask)
+                    #print("centroid: ", centroid)
+                    centroids.append(centroid)
 
-                #print("ORIG SHAPE", colored_image.shape, " MASK SHAPE: ", filled_mask.shape, "  BI ", binary_mask.shape)
+                    #closest_color_to_mean = Converter.ColorConverter.GetClosestColor2(mean_color, centroid, Yparam)
+                    closest_color_to_mean = mean_color
 
-                #white_image = cv2.convertScaleAbs(white_image)
-                #white_image = white_image.astype(np.uint8)
-
-                filled_region = cv2.bitwise_and(image, image, mask=original_size_mask)
-                mean_color = cv2.mean(filled_region, mask=original_size_mask)[:3]
-                #cv2.floodFill(colored_image, None, seed_point, mean_color, 50, 100)
-                
-                #closest_color_to_mean = Converter.ColorConverter.closest_color2(mean_color)
-                closest_color_to_mean = mean_color
-
-                final_image[original_size_mask != 0] = closest_color_to_mean
-
-                
+                    final_image[original_size_mask != 0] = closest_color_to_mean   
+                else:
+                    final_image[original_size_mask != 0] = (0,0,0) #just color black the very small regions of the image as if they were part of the contour
             else:
                 break
 
-            #indexes = []
-            # Find the coordinates of the filled pixels
-            #filled_pixels = np.where(mask == 255)
-
-            # Remove the filled pixels from the indexes list
-            #indexes = list(zip(range(mask.shape[1]), range(mask.shape[0])))
-            #indexes = [index for index in indexes if index not in zip(filled_pixels[1], filled_pixels[0])]
-
-        
-
-        #print(contours)
-
-        #print(mean_colors)
-       
         cv2.drawContours(final_image, contours, -1, color = (0,0,0), thickness=_thickness)
-    
-        '''
-        for y in range(colored_image.shape[0]):
-            for x in range(colored_image.shape[1]):
-
-                if(tuple(colored_image[x][y]) == purple):
-                    cv2.floodFill(colored_image, None, (x,y), (0, 128, 0), 0, 25)
-        '''
+   
+        #visualize the centroids for debugging
+        #for centroid in centroids:
+            #cv2.circle(final_image, centroid, 1, (0,0,200), -1)
 
         final_image = cv2.convertScaleAbs(final_image)
         final_image = final_image.astype(np.uint8)
 
         return final_image
+
+    def CalculateRegionParameters(region):
+        # Create a grid of coordinates
+        y, x = np.mgrid[:region.shape[0], :region.shape[1]]
+
+        # Calculate the centroid coordinates
+        total_mass = np.sum(region)
+        centroid_y = np.sum(y * region) / total_mass
+        centroid_x = np.sum(x * region) / total_mass
+
+        # Find the lowest and highest Y positions of the region
+        non_zero_rows = np.nonzero(np.any(region, axis=1))[0]
+
+        lowest_y = non_zero_rows[0]
+        highest_y = non_zero_rows[-1]
+        
+        return (int(centroid_x), int(centroid_y)), (lowest_y, highest_y)
+
+    def GetNormalizedIllumination(image):
+        # Convert image to Lab color space
+        lab_image = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+        
+        # Split Lab image into channels
+        L, a, b = cv2.split(lab_image)
+        
+        # Apply illumination normalization to the L channel (e.g., histogram equalization)
+        L_normalized = cv2.equalizeHist(L)
+        
+        # Merge the normalized L channel with the original 'a' and 'b' channels
+        lab_image_normalized = cv2.merge((L_normalized, a, b))
+        
+        # Convert back to RGB color space
+        normalized_image = cv2.cvtColor(lab_image_normalized, cv2.COLOR_LAB2BGR)
+        
+        return normalized_image
 
     def GetEdges(image:MatLike) -> MatLike:
         
