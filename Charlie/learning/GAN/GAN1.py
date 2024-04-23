@@ -230,8 +230,10 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
     trainA, trainB = dataset
     # calculate the number of batches per training epoch
     bat_per_epo = int(len(trainA) / n_batch)
+    print(bat_per_epo)
     # calculate the number of training iterations
     n_steps = bat_per_epo * n_epochs
+    print(n_steps)
     # manually enumerate epochs
     for i in range(n_steps):
         # select a batch of real samples
@@ -249,20 +251,3 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
         # summarize model performance
         if (i + 1) % (bat_per_epo * 10) == 0:
             summarize_performance(i, g_model, dataset)
-
-
-# load image data
-# map data can be downlaoded here:
-# https://www.kaggle.com/datasets/alincijov/pix2pix-maps?resource=download-directory
-path = "Charlie/learning/GAN/maps/"
-dataset = load_real_samples(path + "maps_256.npz")
-print("Loaded", dataset[0].shape, dataset[1].shape)
-# define input shape based on the loaded dataset
-image_shape = dataset[0].shape[1:]
-# define the models
-d_model = define_discriminator(image_shape)
-g_model = define_generator(image_shape)
-# define the composite model
-gan_model = define_gan(g_model, d_model, image_shape)
-# train model
-train(d_model, g_model, gan_model, dataset)
