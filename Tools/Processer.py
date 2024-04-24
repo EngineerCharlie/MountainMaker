@@ -9,7 +9,7 @@ import Converter
 
 class PostProcesser(object):
 
-    def ProcessToImages(image):
+    def ProcessToImages(image, strength = 11):
         blurred = PostProcesser.GetBlurredImg(image, 15)
 
         threshold1 = 25
@@ -22,7 +22,7 @@ class PostProcesser(object):
             threshold1,
             threshold2,
             shape=cv2.MORPH_ELLIPSE,
-            strength=(11, 11),
+            strength=(strength, strength),
         )
         return processedImage
 
