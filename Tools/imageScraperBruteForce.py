@@ -46,22 +46,10 @@ for data in results[0]:
         image = cv2.imdecode(image_raw, cv2.IMREAD_COLOR)
 
         # image processing?
-        cv2.imshow("img", image)
-        key = cv2.waitKey(0)
-        # Check key pressed
-        if key == 112:  # W key
-            print("Confirmed")
-            # Perform actions for confirmation
-            cv2.imwrite(f"testdata/raw/Mountain-{str(i)}.jpg", image)
-            cv2.imwrite(
-                f"testdata/scaled/Mountain-{str(i)}.jpg",
-                resize_and_center_crop_image(image, 280, 190),
-            )
-            i += 1
-
-        elif key == 113:  # Q key
-            print("Denied")
-            # Perform actions for denial
-        else:
-            print("No action taken")
-            print(key)
+        
+        cv2.imwrite(f"testdata/raw/Mountain-{str(i)}.jpg", image)
+        cv2.imwrite(
+            f"testdata/scaled/Mountain-{str(i)}.jpg",
+            resize_and_center_crop_image(image, 280, 190),
+        )
+        i += 1
