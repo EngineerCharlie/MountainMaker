@@ -41,23 +41,27 @@ def GetImage(url: str) -> MatLike:
 
 url_type = "url_n"
 i = 0
-for pg in range(50):
+scraped_urls = set()
+pg = 0
+while len(scraped_urls) < 500:
     results = flickr.photos.search(
         page=str(pg),
         tag_mode="all",
         tags="mountain, alps, snow",
         extras=url_type,
-        per_page=10,
+        per_page=100,
         sort="relevance",
         geo_context="0",
         content_types="0",
     )
-
+    pg += 1
 
     for data in results[0]:
         title = data.get("title")
         url = data.get(url_type)
-        if url != None:
+        scraped_urls.update()
+        if url != None and url not in scraped_urls:
+            scraped_urls.add(url)
             wait_random_time()
             image_raw = GetImage(url)
             # decode the image with color
@@ -79,6 +83,11 @@ for pg in range(50):
                 processed,
             )
 
-            if i // 10 == 0:
+            if i % 10 == 0:
                 print(f"Got {i+1} photos")
             i += 1
+
+
+with open("testDataUnfiltered/scraped_urls.txt", "w") as file:
+    for string in scraped_urls:
+        file.write(string + "\n")
