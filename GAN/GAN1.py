@@ -21,6 +21,8 @@ from keras.layers import LeakyReLU
 from matplotlib import pyplot
 from PIL import Image
 
+OUTPUT_PATH = "output/"
+
 
 # define the discriminator model
 def define_discriminator(image_shape):
@@ -232,12 +234,13 @@ def summarize_performance(step, g_model, dataset, n_samples=3):
         pyplot.axis("off")
         pyplot.imshow(X_realB[i])
     # save plot to file
+
     filename1 = "plot_%06d.png" % (step + 1)
-    pyplot.savefig(filename1)
+    pyplot.savefig(OUTPUT_PATH + filename1)
     pyplot.close()
     # save the generator model
     filename2 = "model_%06d.h5" % (step + 1)
-    g_model.save(filename2)
+    g_model.save(OUTPUT_PATH + filename2)
     print(">Saved: %s and %s" % (filename1, filename2))
 
 
@@ -261,7 +264,7 @@ def gen_mountains(
     pyplot.subplot(1, 2, 2)
     pyplot.axis("off")
     pyplot.imshow(X_fakeB[0])
-    pyplot.savefig(output_image_path)
+    pyplot.savefig(OUTPUT_PATH + output_image_path)
     pyplot.close()
     print("> Saved: %s" % output_image_path)
 

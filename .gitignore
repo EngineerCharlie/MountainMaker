@@ -8,3 +8,5 @@ Charlie/learning/GAN/maps/maps_256.npz
 archive.zip
 /archive
 /testDataUnfiltered
+/output
+/outputBackup
