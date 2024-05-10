@@ -34,7 +34,7 @@ def load_images(path_original, path_processed):
         except:
             print(f"error on iteration {i}")
     return [asarray(src_list), asarray(tar_list)]
-
+ 
 
 # dataset path
 path_original = "testDataUnfiltered/scaled/"

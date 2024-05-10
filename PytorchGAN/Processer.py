@@ -24,7 +24,7 @@ class PostProcesser(object):
         
         #read the image with color
         image = cv2.imread(path, -1)
-
+        print("SHAPE READ: " , image.shape)
         #print(image.shape)
         #resize the image
         image = cv2.resize(image, (250, 250))
@@ -490,3 +490,16 @@ class PostProcesser(object):
 
 
         return contour_mask
+    
+    def GetProcessedImg(image:MatLike) -> MatLike:
+        
+        #imageDeNoised = PostProcesser.GetDenoisedImg(image)
+        blurred = PostProcesser.GetBlurredImg(image, 15)
+        #blurredDeNoised = PostProcesser.GetBlurredImg(imageDeNoised, 15)
+
+        threshold1 = 25
+        threshold2 = 50
+        
+        processedImage = PostProcesser.GetContours(blurred, blurred, True, threshold1, threshold2, shape=cv2.MORPH_ELLIPSE, strength=(11,11))
+
+        return processedImage

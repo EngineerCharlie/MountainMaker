@@ -5,11 +5,14 @@ from numpy import ones
 from numpy import array
 from numpy import expand_dims
 from numpy.random import randint
+
+#TensorFlow
+from tensorflow.keras import Input
+from tensorflow.keras.models import load_model
+
 from keras.optimizers import Adam
 from keras.initializers import RandomNormal
 from keras.models import Model
-from tensorflow.keras import Input
-from tensorflow.keras.models import load_model
 from keras.layers import Conv2D
 from keras.layers import Conv2DTranspose
 from keras.layers import LeakyReLU
@@ -18,6 +21,7 @@ from keras.layers import Concatenate
 from keras.layers import Dropout
 from keras.layers import BatchNormalization
 from keras.layers import LeakyReLU
+
 from matplotlib import pyplot
 from PIL import Image
 
@@ -35,9 +39,7 @@ def define_discriminator(image_shape):
     # concatenate images channel-wise
     merged = Concatenate()([in_src_image, in_target_image])
     # C64
-    d = Conv2D(64, (4, 4), strides=(2, 2), padding="same", kernel_initializer=init)(
-        merged
-    )
+    d = Conv2D(64, (4, 4), strides=(2, 2), padding="same", kernel_initializer=init)(merged)
     d = LeakyReLU(alpha=0.2)(d)
     # C128
     d = Conv2D(128, (4, 4), strides=(2, 2), padding="same", kernel_initializer=init)(d)
@@ -71,9 +73,7 @@ def define_encoder_block(layer_in, n_filters, batchnorm=True):
     # weight initialization
     init = RandomNormal(stddev=0.02)
     # add downsampling layer
-    g = Conv2D(
-        n_filters, (4, 4), strides=(2, 2), padding="same", kernel_initializer=init
-    )(layer_in)
+    g = Conv2D(n_filters, (4, 4), strides=(2, 2), padding="same", kernel_initializer=init)(layer_in)
     # conditionally add batch normalization
     if batchnorm:
         g = BatchNormalization()(g, training=True)
@@ -87,9 +87,7 @@ def decoder_block(layer_in, skip_in, n_filters, dropout=True):
     # weight initialization
     init = RandomNormal(stddev=0.02)
     # add upsampling layer
-    g = Conv2DTranspose(
-        n_filters, (4, 4), strides=(2, 2), padding="same", kernel_initializer=init
-    )(layer_in)
+    g = Conv2DTranspose(n_filters, (4, 4), strides=(2, 2), padding="same", kernel_initializer=init)(layer_in)
     # add batch normalization
     g = BatchNormalization()(g, training=True)
     # conditionally add dropout
@@ -128,9 +126,7 @@ def define_generator(image_shape=(192, 256, 3)):
     d6 = decoder_block(d5, e2, 128, dropout=False)
     d7 = decoder_block(d6, e1, 64, dropout=False)
     # output
-    g = Conv2DTranspose(
-        3, (4, 4), strides=(2, 2), padding="same", kernel_initializer=init
-    )(d7)
+    g = Conv2DTranspose(3, (4, 4), strides=(2, 2), padding="same", kernel_initializer=init)(d7)
     out_image = Activation("tanh")(g)
     # define model
     model = Model(in_image, out_image)
@@ -153,9 +149,7 @@ def define_gan(g_model, d_model, image_shape):
     model = Model(in_src, [dis_out, gen_out])
     # compile model
     opt = Adam(lr=0.0002, beta_1=0.5)
-    model.compile(
-        loss=["binary_crossentropy", "mae"], optimizer=opt, loss_weights=[1, 100]
-    )
+    model.compile(loss=["binary_crossentropy", "mae"], optimizer=opt, loss_weights=[1, 100])
     return model
 
 
@@ -244,9 +238,7 @@ def summarize_performance(step, g_model, dataset, n_samples=3):
     print(">Saved: %s and %s" % (filename1, filename2))
 
 
-def gen_mountains(
-    g_model_path, input_image_path, output_image_path="plot_genned_mountain.png"
-):
+def gen_mountains(g_model_path, input_image_path, output_image_path="plot_genned_mountain.png"):
     # Load the generator model
     g_model = load_model(g_model_path)
     # Load and preprocess the input image
