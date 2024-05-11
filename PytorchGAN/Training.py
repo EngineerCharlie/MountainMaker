@@ -7,12 +7,16 @@ from Generator import Generator
 from Discriminator import Discriminator
 import LossFunctions
 import DataSets
+import CustomDataset
 import os
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("--------------------")
 print("Training started with device: ", device)
 print("CUDA version:", torch.version.cuda)
+print(torch.cuda.device_count())
+print(torch.cuda.get_device_name(0))
 print("--------------------")
 #print("CUDA_PATH: {}".format(os.environ["CUDA_PATH"]))
 #print("CUDA_HOME: {}".format(os.environ["CUDA_HOME"]))
@@ -22,23 +26,24 @@ generator = Generator(input_channels=3, output_channels=3).to(device=device)
 discriminator = Discriminator(input_channels=6).to(device=device)
 
 # Define the optimizers for generator and discriminator
-generator_optimizer = optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))
-discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00005, betas=(0.5, 0.999))
+generator_optimizer = optim.Adam(generator.parameters(), lr=0.0005, betas=(0.5, 0.999))
+discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.0001, betas=(0.5, 0.999))#, weight_decay=2)
 
 # Training parameters
-num_epochs = 4
+num_epochs = 100
 resultsPath = "C:/Users/Juhász/NightSkyify/PytorchGAN/modelresults"
 
 # Training loop
 for epoch in range(num_epochs):
     # Iterate over the dataset
-    for i, (real_images, _) in enumerate(DataSets.train_dataloader):
-        # Move real images to device
+    for i, (real_images, drawing_images) in enumerate(CustomDataset.data_loader):
+
+        # Move images to device
         real_images = real_images.to(device)
-        #print("REAL SHAPE: ", real_images.shape)
+        drawing_images = drawing_images.to(device)
+
         # Generate fake images
-        fake_images = generator(real_images).to(device)
-        #print("FAKE SHAPE: ", fake_images.shape)
+        fake_images = generator(drawing_images).to(device)
 
         # Train discriminator
         discriminator_optimizer.zero_grad()
@@ -58,12 +63,12 @@ for epoch in range(num_epochs):
         print("i --> ",i)
         # Print loss
         if i % 2 == 0:
-            print(f"Epoch [{epoch}/{num_epochs}], Batch Step [{i}/{len(DataSets.train_dataloader)}], "
+            print(f"Epoch [{epoch+1}/{num_epochs}], Batch Step [{i}/{len(DataSets.train_dataloader)}], "
                   f"Generator Loss: {g_loss.item():.4f}, Discriminator Loss: {d_loss.item():.4f}")
 
         
         # Test the model every few steps (e.g., every 500 steps)
-        if i % 25 == 0:
+        if i % 20 == 0:
             # Set the generator to evaluation mode
             generator.eval()
 
@@ -76,8 +81,11 @@ for epoch in range(num_epochs):
                 with torch.no_grad():
                     sample_images = generator(input_data)
 
+                #print("shape:", sample_images.shape, " an: ", input_data.shape)
+                #print("together shape:", torch.cat([input_data, sample_images], dim = 0).shape)
+
                 # Save the sample images
-                save_image(sample_images, f"{resultsPath}/generated_images_epoch_{epoch}_step_{i}.png", nrow=8, normalize=True)
+                save_image(torch.cat([input_data[:2,...], sample_images[:2,...]], dim = 0), f"{resultsPath}/generated_images_epoch_{epoch+1}_step_{i}.png", nrow=2, normalize=True)
 
                 # Only process one batch of data, then break out of the loop
                 break
@@ -86,7 +94,6 @@ for epoch in range(num_epochs):
             generator.train()
             
     # Save generated images
-    save_image(fake_images, f"{resultsPath}/generated_images_epoch_{epoch + 1}.png", nrow=8, normalize=True)
+    save_image(torch.cat([drawing_images[:8,...], fake_images[:8,...], real_images[:8,...]], dim = 0), f"{resultsPath}/generated_images_epoch_{epoch + 1}.png", nrow=8, normalize=True)
 
-
-torch.save(generator, "C:/WorkingSets/Model/savedmodel.pt")
+torch.save(generator, f"C:/WorkingSets/Model/savedmodel_{epoch + 1}.pt")

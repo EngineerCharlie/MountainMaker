@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class Discriminator(nn.Module):
-    def __init__(self, input_channels, hidden_channels=16):
+    def __init__(self, input_channels, hidden_channels=32):
         super(Discriminator, self).__init__()
         
         self.encoder = nn.Sequential(

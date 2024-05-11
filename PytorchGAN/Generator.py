@@ -7,7 +7,7 @@ class Generator(nn.Module):
 
         # Encoder layers
         self.encoder = nn.Sequential(
-            nn.Conv2d(input_channels, hidden_channels, kernel_size=4, stride=1, padding=1),
+            nn.Conv2d(input_channels, hidden_channels, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(hidden_channels),
             nn.ReLU(),
             nn.Conv2d(hidden_channels, hidden_channels * 2, kernel_size=4, stride=2, padding=1),
@@ -32,7 +32,7 @@ class Generator(nn.Module):
             nn.ConvTranspose2d(hidden_channels * 2, hidden_channels, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(hidden_channels),
             nn.ReLU(),
-            nn.ConvTranspose2d(hidden_channels, output_channels, kernel_size=4, stride=1, padding=1),
+            nn.ConvTranspose2d(hidden_channels, output_channels, kernel_size=4, stride=2, padding=1),
             nn.Tanh()  # Tanh activation for output pixels in [-1, 1] range
         )
 
