@@ -1,8 +1,9 @@
 import torch 
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-TRAIN_DIR = "data/train"
-VAL_DIR = "data/val"
+
+TRAIN_DIR = "C:/Users/nadee/TrainingSets/testDataUnfiltered/mountains_256.npz"
+VAL_DIR = "C:/Users/nadee/TrainingSets/testDataUnfiltered/mountains_256.npz"
 LEARNING_RATE = 2e-4
 BATCH_SIZE = 16
 NUM_WORKERS = 2

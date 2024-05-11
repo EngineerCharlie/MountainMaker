@@ -63,6 +63,7 @@ def train_fn(
                 D_real=torch.sigmoid(D_real).mean().item(),
                 D_fake=torch.sigmoid(D_fake).mean().item(),
             )
+            print("G loss = "+ G_loss)
 
 
 def main():
@@ -80,7 +81,7 @@ def main():
         load_checkpoint(
             config.CHECKPOINT_DISC, disc, opt_disc, config.LEARNING_RATE,
         )
-    data = load_real_samples("C:/Users/nadee/TrainingSets/testDataUnfiltered/mountains_256.npz")
+    data = load_real_samples(config.TRAIN_DIR)
    
 
     input_image = data[0]
@@ -97,7 +98,7 @@ def main():
     )
     g_scaler = torch.cuda.amp.GradScaler()
     d_scaler = torch.cuda.amp.GradScaler()
-    val_data =  load_real_samples("C:/Users/nadee/TrainingSets/testDataUnfiltered/mountains_256.npz")
+    val_data =  load_real_samples(config.VAL_DIR)
    
 
     input_image = val_data[0]
@@ -114,7 +115,7 @@ def main():
         train_fn(
             disc, gen, train_loader, opt_disc, opt_gen, L1_LOSS, BCE, g_scaler, d_scaler,
         )
-
+        
         if config.SAVE_MODEL and epoch % 5 == 0:
             save_checkpoint(gen, opt_gen, filename=config.CHECKPOINT_GEN)
             save_checkpoint(disc, opt_disc, filename=config.CHECKPOINT_DISC)
