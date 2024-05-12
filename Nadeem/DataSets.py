@@ -4,7 +4,7 @@ from torchvision.transforms import transforms
 
 batch_size = 8
 #imageSize = (280, 190)
-imageSize = (249, 249)
+imageSize = (256, 256)
 
 
 # Define transforms

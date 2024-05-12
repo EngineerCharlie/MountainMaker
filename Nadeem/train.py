@@ -13,6 +13,8 @@ from numpy import load
 from matplotlib import pyplot
 
 torch.backends.cudnn.benchmark = True
+
+
 def load_real_samples(filename):
     # load compressed arrays
     data = load(filename)
@@ -23,8 +25,17 @@ def load_real_samples(filename):
     X2 = (X2 - 127.5) / 127.5
     return [X1, X2]
 
+
 def train_fn(
-    disc, gen, loader, opt_disc, opt_gen, l1_loss, bce, g_scaler, d_scaler,
+    disc,
+    gen,
+    loader,
+    opt_disc,
+    opt_gen,
+    l1_loss,
+    bce,
+    g_scaler,
+    d_scaler,
 ):
     loop = tqdm(loader, leave=True)
 
@@ -63,33 +74,42 @@ def train_fn(
                 D_real=torch.sigmoid(D_real).mean().item(),
                 D_fake=torch.sigmoid(D_fake).mean().item(),
             )
-            print("G loss = "+ G_loss)
+    print("\nG loss = " + str(G_loss.mean().item()))
 
 
 def main():
     disc = Discriminator(in_channels=3).to(config.DEVICE)
     gen = Generator(in_channels=3, features=64).to(config.DEVICE)
-    opt_disc = optim.Adam(disc.parameters(), lr=config.LEARNING_RATE, betas=(0.5, 0.999),)
+    opt_disc = optim.Adam(
+        disc.parameters(),
+        lr=config.LEARNING_RATE/2,
+        betas=(0.5, 0.999),
+    )
     opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE, betas=(0.5, 0.999))
     BCE = nn.BCEWithLogitsLoss()
     L1_LOSS = nn.L1Loss()
 
     if config.LOAD_MODEL:
         load_checkpoint(
-            config.CHECKPOINT_GEN, gen, opt_gen, config.LEARNING_RATE,
+            config.CHECKPOINT_GEN,
+            gen,
+            opt_gen,
+            config.LEARNING_RATE,
         )
         load_checkpoint(
-            config.CHECKPOINT_DISC, disc, opt_disc, config.LEARNING_RATE,
+            config.CHECKPOINT_DISC,
+            disc,
+            opt_disc,
+            config.LEARNING_RATE,
         )
     data = load_real_samples(config.TRAIN_DIR)
-   
 
     input_image = data[0]
     target_image = data[1]
 
     in_reshaped = np.moveaxis(input_image, 3, 1)
     tar_reshaped = np.moveaxis(target_image, 3, 1)
-    train_dataset = list(zip(in_reshaped,tar_reshaped))
+    train_dataset = list(zip(in_reshaped, tar_reshaped))
     train_loader = DataLoader(
         train_dataset,
         batch_size=config.BATCH_SIZE,
@@ -98,29 +118,36 @@ def main():
     )
     g_scaler = torch.cuda.amp.GradScaler()
     d_scaler = torch.cuda.amp.GradScaler()
-    val_data =  load_real_samples(config.VAL_DIR)
-   
+    val_data = load_real_samples(config.VAL_DIR)
 
     input_image = val_data[0]
     target_image = val_data[1]
     in_reshaped = np.moveaxis(input_image, 3, 1)
     tar_reshaped = np.moveaxis(target_image, 3, 1)
-   
-   
-    val_dataset = list(zip(in_reshaped,tar_reshaped))
+
+    val_dataset = list(zip(in_reshaped, tar_reshaped))
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
-    
 
     for epoch in range(config.NUM_EPOCHS):
+        if epoch % 5 == 0:
+            print(f"Epoch number {epoch}")
         train_fn(
-            disc, gen, train_loader, opt_disc, opt_gen, L1_LOSS, BCE, g_scaler, d_scaler,
+            disc,
+            gen,
+            train_loader,
+            opt_disc,
+            opt_gen,
+            L1_LOSS,
+            BCE,
+            g_scaler,
+            d_scaler,
         )
-        
-        if config.SAVE_MODEL and epoch % 5 == 0:
+
+        if config.SAVE_MODEL and epoch % 50 == 0 and epoch > 0:
             save_checkpoint(gen, opt_gen, filename=config.CHECKPOINT_GEN)
             save_checkpoint(disc, opt_disc, filename=config.CHECKPOINT_DISC)
 
-        save_some_examples(gen, val_loader, epoch, folder="Nadeem/evaluation")
+        save_some_examples(gen, val_loader, epoch, folder="Nadeem/evaluation1")
 
 
 if __name__ == "__main__":

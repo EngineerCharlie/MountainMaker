@@ -43,13 +43,13 @@ url_type = "url_n"
 i = 0
 scraped_urls = set()
 pg = 0
-while len(scraped_urls) < 500:
+while len(scraped_urls) < 1020:
     results = flickr.photos.search(
         page=str(pg),
         tag_mode="all",
         tags="mountain, alps, snow",
         extras=url_type,
-        per_page=100,
+        per_page=25,
         sort="relevance",
         geo_context="0",
         content_types="0",
@@ -66,7 +66,9 @@ while len(scraped_urls) < 500:
             image_raw = GetImage(url)
             # decode the image with color
             image = cv2.imdecode(image_raw, cv2.IMREAD_COLOR)
-            image_scaled = resize_and_center_crop_image(image, 256, 192)
+            if image.shape[0] < 256 or image.shape[1] < 256:
+                pass
+            image_scaled = resize_and_center_crop_image(image, 256, 256)
             processed = PostProcesser.ProcessToImages(image_scaled)
             # cv2.imshow("img", image)
             # cv2.imshow("img_p", processed)
