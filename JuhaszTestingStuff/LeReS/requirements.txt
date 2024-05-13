@@ -1,6 +1,0 @@
-matplotlib
-opencv-python
-plyfile
-pyyaml
-dill
-tensorboardX
