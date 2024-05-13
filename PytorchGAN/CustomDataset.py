@@ -34,7 +34,7 @@ class CustomDataset(Dataset):
         return real_image, drawing_image
 
 #Larger batch size trains faster but might not capture the important details?
-batch_size = 16
+batch_size = 8
 #imageSize = (280, 190)
 imageSize = (256, 256)
 
@@ -42,7 +42,7 @@ imageSize = (256, 256)
 transform = transforms.Compose([
     transforms.Resize(imageSize),  # Resize images
     transforms.ToTensor(),           # Convert images to PyTorch tensors
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize images
+    transforms.Normalize([0.5,0.5,0.5], [0.5,0.5,0.5])  # Normalize images
 ])
 
 

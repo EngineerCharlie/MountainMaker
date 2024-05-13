@@ -44,13 +44,13 @@ i = 0
 scraped_urls = set()
 pg = 0
 try:
-    while len(scraped_urls) < 1000:
+    while len(scraped_urls) < 10000:
         results = flickr.photos.search(
             page=str(pg),
             tag_mode="all",
             tags="mountain, alps, snow",
             extras=url_type,
-            per_page=100,
+            per_page=1000,
             sort="relevance",
             geo_context="0",
             content_types="0",

@@ -3,7 +3,7 @@ from torchvision.datasets import ImageFolder
 from torchvision.transforms import transforms
 
 #Larger batch size trains faster but might not capture the important details?
-batch_size = 16
+batch_size = 8
 #imageSize = (280, 190)
 imageSize = (256, 256)
 
