@@ -2,18 +2,19 @@ import cv2
 import torch
 import numpy as np
 import os
-import matplotlib.pyplot as plt
 from transformers import AutoImageProcessor, AutoModelForDepthEstimation
 from pathlib import Path
 from tqdm import tqdm
 from sklearn.cluster import MiniBatchKMeans
+from image_tracing import array_to_svg
 
 # Paths for image input and output
-valid_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/academia"
-drawing_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/atelier"
+input_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/input-images"
+depth_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/depth-images"
+svg_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/svg-images"
 
 # Ensure output directory exists
-Path(drawing_images_folder).mkdir(parents=True, exist_ok=True)
+Path(depth_images_folder).mkdir(parents=True, exist_ok=True)
 
 # Load the model and processor
 processor = AutoImageProcessor.from_pretrained("LiheYoung/depth-anything-large-hf")
@@ -46,9 +47,9 @@ def reduce_colors(img, num_colors=6):
 
 def process_images():
     saved_image_paths = []
-    files = [f for f in os.listdir(valid_images_folder) if f.lower().endswith(('.jpg', '.png'))]
+    files = [f for f in os.listdir(input_images_folder) if f.lower().endswith(('.jpg', '.png'))]
     for filename in tqdm(files, desc="Processing Images"):
-        image_path = os.path.join(valid_images_folder, filename)
+        image_path = os.path.join(input_images_folder, filename)
         image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
         if image is not None:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -59,10 +60,15 @@ def process_images():
             depth_img_colored = cv2.applyColorMap(depth_img, cv2.COLORMAP_INFERNO)
 
             # Save the depth image
-            depth_output_path = os.path.join(drawing_images_folder, f"depth-{filename}")
+            depth_output_path = os.path.join(depth_images_folder, f"depth-{filename}")
             cv2.imwrite(depth_output_path, depth_img_colored)
             saved_image_paths.append(depth_output_path)
             print(f"Saved depth {filename} to {depth_output_path}")
+
+            # Save the svg image
+            # This might not be useful haha
+            svg_image = array_to_svg(depth_img_colored, svg_images_folder, filename)
+
         else:
             print(f"Failed to load {filename}")
 
