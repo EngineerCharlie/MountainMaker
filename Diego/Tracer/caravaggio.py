@@ -6,12 +6,11 @@ from transformers import AutoImageProcessor, AutoModelForDepthEstimation
 from pathlib import Path
 from tqdm import tqdm
 from sklearn.cluster import MiniBatchKMeans
-from image_tracing import array_to_svg
 
 # Paths for image input and output
 input_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/input-images"
 depth_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/depth-images"
-svg_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/svg-images"
+traced_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/traced-images"
 
 # Ensure output directory exists
 Path(depth_images_folder).mkdir(parents=True, exist_ok=True)
@@ -29,7 +28,50 @@ def convert_image_to_depth_image(img):
     return depth
 
 
-def reduce_colors(img, num_colors=6):
+def extract_and_replace_colors(img):
+    # Declare color palette
+    new_colors = [(22, 138, 173), (106, 153, 78), (56, 102, 65), (19, 42, 19)]
+
+    # Ensure new_colors has exactly 4 colors
+    if len(new_colors) != 4:
+        raise ValueError("new_colors must contain exactly 4 colors.")
+
+    # Get unique colors in the image
+    unique_colors = np.unique(img.reshape(-1, img.shape[2]), axis=0)
+
+    # Ensure the image has exactly 4 unique colors
+    if unique_colors.shape[0] != 4:
+        raise ValueError("The input image must contain exactly 4 unique colors.")
+
+    # Convert unique colors to L*a*b* color space for lightness comparison
+    lab_colors = cv2.cvtColor(np.uint8([unique_colors]), cv2.COLOR_RGB2LAB)[0]
+
+    # Sort colors based on lightness (L* value)
+    sorted_indices = np.argsort(lab_colors[:, 0])
+    sorted_colors = unique_colors[sorted_indices]
+
+    # Create a mapping from the sorted colors to the new colors
+    color_mapping = {tuple(sorted_colors[i]): new_colors[i] for i in range(4)}
+
+    # Replace the colors in the image
+    replaced_img = np.zeros_like(img)
+    for y in range(img.shape[0]):
+        for x in range(img.shape[1]):
+            replaced_img[y, x] = color_mapping[tuple(img[y, x])]
+
+    replaced_img = cv2.cvtColor(replaced_img, cv2.COLOR_BGR2RGB)
+
+    return replaced_img
+
+
+def reduce_colors(img, num_colors=4):
+    # define the contrast and brightness value
+    contrast = 6.  # Contrast control ( 0 to 127)
+    brightness = 1.  # Brightness control (0-100)
+    # call addWeighted function. use beta = 0 to effectively only
+    img = cv2.addWeighted(img, contrast, img, 0, brightness)
+
+    img = cv2.bilateralFilter(img, 15, 120, 120)
     # Convert the image from RGB to L*a*b* color space
     lab_image = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
     # Reshape the image to a 2D array of pixels
@@ -42,7 +84,11 @@ def reduce_colors(img, num_colors=6):
     quant = quant.reshape(img.shape)
     # Convert the quantized image from L*a*b* back to RGB
     quant = cv2.cvtColor(quant, cv2.COLOR_LAB2RGB)
-    return quant
+
+    # Recolor with the nature color palette
+    final_output = extract_and_replace_colors(quant)
+
+    return final_output
 
 
 def process_images():
@@ -65,9 +111,11 @@ def process_images():
             saved_image_paths.append(depth_output_path)
             print(f"Saved depth {filename} to {depth_output_path}")
 
-            # Save the svg image
-            # This might not be useful haha
-            svg_image = array_to_svg(depth_img_colored, svg_images_folder, filename)
+            # Save the reduced colors image
+            traced_image = reduce_colors(depth_img_colored)
+            traced_output_path = os.path.join(traced_images_folder, f"traced-{filename}")
+            cv2.imwrite(traced_output_path, traced_image)
+            print(f"Saved traced {filename} to {traced_output_path}")
 
         else:
             print(f"Failed to load {filename}")
