@@ -2,8 +2,8 @@ import cv2
 import os
 from Processer import PostProcesser
 
-original_images_folder = "C:/WorkingSets/Original"
-valid_images_folder = "C:/WorkingSets/TrainingSets/Valid"
+original_images_folder = "C:/TrainingSet/Original"
+valid_images_folder = "C:/TrainingSet/Valid"
 
 # Loop through each file in the input folder
 for filename in os.listdir(original_images_folder):
@@ -17,9 +17,9 @@ for filename in os.listdir(original_images_folder):
         image = cv2.imread(image_path)
 
         # Check if the image is loaded successfully
-        if image is not None and image.shape[0] >= 256 and image.shape[1] >= 256:
+        if image is not None and image.shape[0] >= 250 and image.shape[1] >= 250:
 
-            image = cv2.resize(image, (256,256))
+            image = cv2.resize(image, (250,250))
             # Process the image as needed
             #processed_img = PostProcesser.GetProcessedImg(image)
             
