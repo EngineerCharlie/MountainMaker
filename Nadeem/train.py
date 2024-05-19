@@ -74,7 +74,7 @@ def train_fn(
                 D_real=torch.sigmoid(D_real).mean().item(),
                 D_fake=torch.sigmoid(D_fake).mean().item(),
             )
-    print("\nG loss = " + str(G_loss.mean().item()))
+    print("G loss = " + str(G_loss.mean().item()))
 
 
 def main():
@@ -82,7 +82,7 @@ def main():
     gen = Generator(in_channels=3, features=64).to(config.DEVICE)
     opt_disc = optim.Adam(
         disc.parameters(),
-        lr=config.LEARNING_RATE/2,
+        lr=config.LEARNING_RATE / 2,
         betas=(0.5, 0.999),
     )
     opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE, betas=(0.5, 0.999))
@@ -142,12 +142,22 @@ def main():
             g_scaler,
             d_scaler,
         )
+        save_interval = 15
+        if config.SAVE_MODEL and epoch % save_interval == 0 and epoch > 0:
+            if epoch % (4 * save_interval): # make backup of model
+                save_checkpoint(
+                    gen, opt_gen, filename=config.CHECKPOINT_GEN + str(epoch)
+                )
+                save_checkpoint(
+                    disc, opt_disc, filename=config.CHECKPOINT_DISC + str(epoch)
+                )
+            else:
+                save_checkpoint(gen, opt_gen, filename=config.CHECKPOINT_GEN)
+                save_checkpoint(disc, opt_disc, filename=config.CHECKPOINT_DISC)
 
-        if config.SAVE_MODEL and epoch % 50 == 0 and epoch > 0:
-            save_checkpoint(gen, opt_gen, filename=config.CHECKPOINT_GEN)
-            save_checkpoint(disc, opt_disc, filename=config.CHECKPOINT_DISC)
-
-        save_some_examples(gen, val_loader, epoch, folder="Nadeem/evaluation1")
+        save_some_examples(
+            gen, val_loader, epoch, folder="Nadeem/evaluation/evaluation - 1750 im"
+        )
 
 
 if __name__ == "__main__":
