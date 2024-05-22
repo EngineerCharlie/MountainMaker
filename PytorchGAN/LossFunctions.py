@@ -16,4 +16,4 @@ def discriminator_loss(real_output, fake_output):
     fake_target = torch.zeros_like(fake_output)
     real_loss = F.binary_cross_entropy_with_logits(real_output, real_target)
     fake_loss = F.binary_cross_entropy_with_logits(fake_output, fake_target)
-    return (real_loss + fake_loss)/2
+    return real_loss + fake_loss
