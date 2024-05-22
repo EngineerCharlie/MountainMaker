@@ -139,7 +139,7 @@ def create_color_block_image(colors, block_size=50):
 
     return color_block_image
 
-
+failed_images = set()
 def process_images():
     saved_image_paths = []
     files = [
@@ -147,65 +147,73 @@ def process_images():
         for f in os.listdir(input_images_folder)
         if f.lower().endswith((".jpg", ".png"))
     ]
+    
     for filename in tqdm(files, desc="Processing Images"):
-        image_path = os.path.join(input_images_folder, filename)
-        image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-        if image is not None:
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        try:
+            image_path = os.path.join(input_images_folder, filename)
+            image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+            if image is not None:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-            # Step 1: Convert to depth image
-            depth_img = convert_image_to_depth_image(image)
-            depth_img = cv2.resize(depth_img, (256, 256))  # Resize to 256x256
-            depth_img = cv2.normalize(
-                depth_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
-            )
-            depth_img = np.uint8(depth_img)
-            depth_img_colored = cv2.applyColorMap(depth_img, cv2.COLORMAP_INFERNO)
-            depth_output_path = os.path.join(depth_images_folder, f"depth-{filename}")
-            cv2.imwrite(depth_output_path, depth_img_colored)
-            saved_image_paths.append(depth_output_path)
-            print(f"Saved depth image for {filename}")
+                # Step 1: Convert to depth image
+                depth_img = convert_image_to_depth_image(image)
+                depth_img = cv2.resize(depth_img, (256, 256))  # Resize to 256x256
+                depth_img = cv2.normalize(
+                    depth_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+                )
+                depth_img = np.uint8(depth_img)
+                depth_img_colored = cv2.applyColorMap(depth_img, cv2.COLORMAP_INFERNO)
+                depth_output_path = os.path.join(depth_images_folder, f"depth-{filename}")
+                cv2.imwrite(depth_output_path, depth_img_colored)
+                saved_image_paths.append(depth_output_path)
+                print(f"Saved depth image for {filename}")
 
-            # Step 2: Reduce colors in the depth image
-            reduced_depth_image = reduce_colors(depth_img_colored)
-            reduced_depth_output_path = os.path.join(
-                reduced_depth_images_folder, f"reduced-{filename}"
-            )
-            cv2.imwrite(reduced_depth_output_path, reduced_depth_image)
-            print(f"Saved reduced depth image for {filename}")
+                # Step 2: Reduce colors in the depth image
+                reduced_depth_image = reduce_colors(depth_img_colored)
+                reduced_depth_output_path = os.path.join(
+                    reduced_depth_images_folder, f"reduced-{filename}"
+                )
+                cv2.imwrite(reduced_depth_output_path, reduced_depth_image)
+                print(f"Saved reduced depth image for {filename}")
 
-            # Step 3: Get pixel coordinates by color
-            color_coordinates = get_pixel_coordinates_by_color(reduced_depth_image)
+                # Step 3: Get pixel coordinates by color
+                color_coordinates = get_pixel_coordinates_by_color(reduced_depth_image)
 
-            # Step 4: Get average colors from the original image
-            original_img_colors = [
-                get_average_color(image, color_coordinates["c1"], filename, "c1"),
-                get_average_color(image, color_coordinates["c2"], filename, "c2"),
-                get_average_color(image, color_coordinates["c3"], filename, "c3"),
-                get_average_color(image, color_coordinates["c4"], filename, "c4"),
-            ]
+                # Step 4: Get average colors from the original image
+                original_img_colors = [
+                    get_average_color(image, color_coordinates["c1"], filename, "c1"),
+                    get_average_color(image, color_coordinates["c2"], filename, "c2"),
+                    get_average_color(image, color_coordinates["c3"], filename, "c3"),
+                    get_average_color(image, color_coordinates["c4"], filename, "c4"),
+                ]
 
-            # Create and save the average colors block image
-            average_colors_image = create_color_block_image(original_img_colors)
-            average_colors_output_path = os.path.join(
-                average_colors_folder, f"average-colors-{filename}"
-            )
-            cv2.imwrite(average_colors_output_path, average_colors_image)
-            print(f"Saved average colors image for {filename}")
+                # Create and save the average colors block image
+                average_colors_image = create_color_block_image(original_img_colors)
+                average_colors_output_path = os.path.join(
+                    average_colors_folder, f"average-colors-{filename}"
+                )
+                cv2.imwrite(average_colors_output_path, average_colors_image)
+                print(f"Saved average colors image for {filename}")
 
-            # Step 5: Extract and replace colors
-            traced_image = extract_and_replace_colors(
-                reduced_depth_image, original_img_colors
-            )
-            traced_output_path = os.path.join(
-                traced_images_folder, f"traced-{filename}"
-            )
-            cv2.imwrite(traced_output_path, traced_image)
-            print(f"Saved traced image for {filename}")
-        else:
-            print(f"Failed to load {filename}")
+                # Step 5: Extract and replace colors
+                traced_image = extract_and_replace_colors(
+                    reduced_depth_image, original_img_colors
+                )
+                traced_output_path = os.path.join(
+                    traced_images_folder, f"traced-{filename}"
+                )
+                cv2.imwrite(traced_output_path, traced_image)
+                print(f"Saved traced image for {filename}")
+            else:
+                print(f"Failed to load {filename}")
+        except:
+            print("FAILED TOO CONVERT IMAGE")
+            failed_images.add(filename)
 
     return saved_image_paths
 
 
 process_images()
+with open("testDataUnfiltered/caravaggio/failed_images.txt", "w") as file:
+    for string in failed_images:
+        file.write(string + "\n")

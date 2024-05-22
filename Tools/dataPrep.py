@@ -9,7 +9,8 @@ from numpy import savez_compressed
 # dataset path
 path_original_images = "testDataUnfiltered/valid/"
 # path_processed = "testDataUnfiltered/scaled_processed_downsized/"
-path_processed_images = "testDataUnfiltered/drawing/"
+path_processed_images = "testDataUnfiltered/caravaggio/traced-images/"
+filename = "testDataUnfiltered/mountains_Diego.npz"
 
 # load all images in a directory into memory
 def load_images(path_original, path_processed):
@@ -19,10 +20,10 @@ def load_images(path_original, path_processed):
     for i in range(num_images):
         try:
             original_filename = f"Mountain-{str(i)}.jpg"
-            processed_filename = f"Mountain_processed-{str(i)}.jpg"
+            processed_filename = f"traced-Mountain-{str(i)}.jpg"
             # load and resize the image
             original_image = load_img(path_original + original_filename, target_size=(256,256))
-            # convert to numpy array 
+            # convert to numpy array
             original_image = img_to_array(original_image)
             # load and resize the image
             processed_image = load_img(
@@ -41,6 +42,6 @@ def load_images(path_original, path_processed):
 [src_images, tar_images] = load_images(path_original_images, path_processed_images)
 print("Loaded: ", src_images.shape, tar_images.shape)
 # save as compressed numpy array
-filename = "testDataUnfiltered/mountains_256.npz"
+
 savez_compressed(filename, src_images, tar_images)
 print("Saved dataset: ", filename)
