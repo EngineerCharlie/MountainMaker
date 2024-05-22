@@ -19,93 +19,124 @@ def load_real_samples(filename):
     # load compressed arrays
     data = load(filename)
     # unpack arrays
-    X1, X2 = data["arr_0"], data["arr_1"]
-    # scale from [0,255] to [-1,1]
-    X1 = (X1 - 127.5) / 127.5
-    X2 = (X2 - 127.5) / 127.5
-    return [X1, X2]
+    source, target = data["arr_0"], data["arr_1"]
+    # Normalize scale from [0,255] to [-1,1]
+    source = (source - 127.5) / 127.5
+    target = (target - 127.5) / 127.5
+    return source, target
 
 
 def train_fn(
-    disc,
-    gen,
+    discriminator,
+    generator,
     loader,
-    opt_disc,
-    opt_gen,
+    optimizer_discriminator,
+    optimizer_generator,
     l1_loss,
     bce,
-    g_scaler,
-    d_scaler,
+    generator_scaler,
+    discriminator_scaler,
 ):
+    # Load data and display progress bar as each piece of data is loaded
     loop = tqdm(loader, leave=True)
 
-    for idx, (x, y) in enumerate(loop):
-        x = x.to(config.DEVICE)
-        y = y.to(config.DEVICE)
+    for idx, (input_images, targets_real) in enumerate(loop):
+        # Load target and source images to optimal device
+        input_images = input_images.to(config.DEVICE)
+        targets_real = targets_real.to(config.DEVICE)
 
         # Train Discriminator
         with torch.cuda.amp.autocast():
-            y_fake = gen(x)
-            D_real = disc(x, y)
-            D_real_loss = bce(D_real, torch.ones_like(D_real))
-            D_fake = disc(x, y_fake.detach())
-            D_fake_loss = bce(D_fake, torch.zeros_like(D_fake))
-            D_loss = (D_real_loss + D_fake_loss) / 2
+            # Use generator to  generate fake images
+            targets_fake = generator(input_images)
+            # Get discriminator real/fake predictions from real source and targets
+            # Output is array of [batch size, 1, 30, 30]
+            real_predictions = discriminator(input_images, targets_real)
+            # Use discriminator output to produce a scalar that is used to feed back into model
+            real_losses = bce(real_predictions, torch.ones_like(real_predictions))
+            # Get discriminator real/fake predictions from real source and fake targets
+            fake_predictions = discriminator(input_images, targets_fake.detach())
+            # Use discriminator output for single loss scalar
+            fake_losses = bce(fake_predictions, torch.zeros_like(fake_predictions))
+            # Compute average accuracy of discriminator of both real and fake over the current batch
+            overall_discriminator_loss = (real_losses + fake_losses) / 2
 
-        disc.zero_grad()
-        d_scaler.scale(D_loss).backward()
-        d_scaler.step(opt_disc)
-        d_scaler.update()
+        # Zero the gradients before we calculate them for back propogation
+        discriminator.zero_grad()
+        # Scales the losses stop gradients prematurely becoming 0, then computes gradients
+        discriminator_scaler.scale(overall_discriminator_loss).backward()
+        # Unscales the gradients back and updates the optimizer parameters
+        discriminator_scaler.step(optimizer_discriminator)
+        # Adjusts the scaling factor to allow for amp
+        discriminator_scaler.update()
 
-        # Train generator
+        # Using updated discriminator, recompute real/fake predictions
         with torch.cuda.amp.autocast():
-            D_fake = disc(x, y_fake)
-            G_fake_loss = bce(D_fake, torch.ones_like(D_fake))
-            L1 = l1_loss(y_fake, y) * config.L1_LAMBDA
-            G_loss = G_fake_loss + L1
+            # Computes predictions for fake input images
+            fake_predictions = discriminator(input_images, targets_fake)
+            # Computes losses of predictions
+            generator_fake_losses = bce(
+                fake_predictions, torch.ones_like(fake_predictions)
+            )
+            # Computes the mean absolute error (or difference) between the fake and real outputs
+            # If a generated image closely resembles the original, then the L1_loss will be low
+            L1 = l1_loss(targets_fake, targets_real) * config.L1_LAMBDA
+            # By summing these two values, the  generator losses are highest when it both:
+            # A) - doesn't fool the discriminator
+            # B) - doesn't resemble the original output image
+            generator_overall_losses = generator_fake_losses + L1
 
-        opt_gen.zero_grad()
-        g_scaler.scale(G_loss).backward()
-        g_scaler.step(opt_gen)
-        g_scaler.update()
+        optimizer_generator.zero_grad()
+        generator_scaler.scale(generator_overall_losses).backward()
+        generator_scaler.step(optimizer_generator)
+        generator_scaler.update()
 
         if idx % 10 == 0:
+            # Update cmd line outputs based on current accuracy values
             loop.set_postfix(
-                D_real=torch.sigmoid(D_real).mean().item(),
-                D_fake=torch.sigmoid(D_fake).mean().item(),
+                D_real=torch.sigmoid(real_predictions).mean().item(),
+                D_fake=torch.sigmoid(fake_predictions).mean().item(),
             )
-    print("G loss = " + str(G_loss.mean().item()))
+    print("G loss = " + str(generator_overall_losses.mean().item()))
 
 
 def main():
-    disc = Discriminator(in_channels=3).to(config.DEVICE)
-    gen = Generator(in_channels=3, features=64).to(config.DEVICE)
-    opt_disc = optim.Adam(
-        disc.parameters(),
-        lr=config.LEARNING_RATE / 2,
-        betas=(0.5, 0.999),
+    discriminator = Discriminator(in_channels=3).to(config.DEVICE)
+    generator = Generator(in_channels=3, features=64).to(config.DEVICE)
+
+    optimizer_disc = optim.Adam(
+        discriminator.parameters(),
+        lr=config.LEARNING_RATE_DISC,
+        betas=(config.DISC_BETA1, config.DISC_BETA2),
     )
-    opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE, betas=(0.5, 0.999))
+    optimizer_gen = optim.Adam(
+        generator.parameters(),
+        lr=config.LEARNING_RATE_GEN,
+        betas=(config.GEN_BETA1, config.GEN_BETA2),
+    )
+    # Combines sigmoid activation fnc and cross entropy loss fnc into a single function
     BCE = nn.BCEWithLogitsLoss()
+    # Uses "per pixel" losses to compare real and generated output images, returning
+    # a single scalar as  the average of all pixel losses
     L1_LOSS = nn.L1Loss()
 
+    # Loads in pre-trained modeel
     if config.LOAD_MODEL:
         load_checkpoint(
             config.CHECKPOINT_GEN,
-            gen,
-            opt_gen,
+            generator,
+            optimizer_gen,
             config.LEARNING_RATE,
         )
         load_checkpoint(
             config.CHECKPOINT_DISC,
-            disc,
-            opt_disc,
+            discriminator,
+            optimizer_disc,
             config.LEARNING_RATE,
         )
-    data = load_real_samples(config.TRAIN_DIR)
 
-    input_image = data[0]
-    target_image = data[1]
+    # Loads data from compressed numpy array and returns the source and target images
+    input_image, target_image = load_real_samples(config.TRAIN_DIR)
 
     in_reshaped = np.moveaxis(input_image, 3, 1)
     tar_reshaped = np.moveaxis(target_image, 3, 1)
@@ -116,12 +147,15 @@ def main():
         shuffle=True,
         num_workers=config.NUM_WORKERS,
     )
-    g_scaler = torch.cuda.amp.GradScaler()
-    d_scaler = torch.cuda.amp.GradScaler()
-    val_data = load_real_samples(config.VAL_DIR)
 
-    input_image = val_data[0]
-    target_image = val_data[1]
+    # Defines the pytorch scaler function that is used to back propogate values
+    # through the models. Due to limited hardware and a fairly complex model, we're
+    # using torch's automatic mixed precision to try and reduce training times.
+    generator_scaler = torch.cuda.amp.GradScaler()
+    discriminator_scaler = torch.cuda.amp.GradScaler()
+    # Loads data from compressed numpy array and returns the source and target images
+    input_image, target_image = load_real_samples(config.VAL_DIR)
+
     in_reshaped = np.moveaxis(input_image, 3, 1)
     tar_reshaped = np.moveaxis(target_image, 3, 1)
 
@@ -132,31 +166,42 @@ def main():
         if epoch % 5 == 0:
             print(f"Epoch number {epoch}")
         train_fn(
-            disc,
-            gen,
+            discriminator,
+            generator,
             train_loader,
-            opt_disc,
-            opt_gen,
+            optimizer_disc,
+            optimizer_gen,
             L1_LOSS,
             BCE,
-            g_scaler,
-            d_scaler,
+            generator_scaler,
+            discriminator_scaler,
         )
         save_interval = 15
         if config.SAVE_MODEL and epoch % save_interval == 0 and epoch > 0:
-            if epoch % (4 * save_interval): # make backup of model
+            if epoch % (4 * save_interval):  # make backup of model
                 save_checkpoint(
-                    gen, opt_gen, filename=config.CHECKPOINT_GEN + str(epoch)
+                    generator,
+                    optimizer_gen,
+                    filename=config.CHECKPOINT_GEN + str(epoch),
                 )
                 save_checkpoint(
-                    disc, opt_disc, filename=config.CHECKPOINT_DISC + str(epoch)
+                    discriminator,
+                    optimizer_disc,
+                    filename=config.CHECKPOINT_DISC + str(epoch),
                 )
             else:
-                save_checkpoint(gen, opt_gen, filename=config.CHECKPOINT_GEN)
-                save_checkpoint(disc, opt_disc, filename=config.CHECKPOINT_DISC)
+                save_checkpoint(
+                    generator, optimizer_gen, filename=config.CHECKPOINT_GEN
+                )
+                save_checkpoint(
+                    discriminator, optimizer_disc, filename=config.CHECKPOINT_DISC
+                )
 
         save_some_examples(
-            gen, val_loader, epoch, folder="Nadeem/evaluation/evaluation - 1750 im"
+            generator,
+            val_loader,
+            epoch,
+            folder="Nadeem/evaluation/evaluation - 1750 im",
         )
 
 
