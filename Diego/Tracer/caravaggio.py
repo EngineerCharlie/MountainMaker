@@ -8,11 +8,12 @@ from tqdm import tqdm
 from sklearn.cluster import MiniBatchKMeans
 
 # Paths for image input and output
-input_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/input-images"
-depth_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/depth-images"
-traced_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/traced-images"
-reduced_depth_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/reduced-depth-images"
-average_colors_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/average-colors"
+# input_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/input-images"
+input_images_folder = "testDataUnfiltered/valid"
+depth_images_folder = "testDataUnfiltered/caravaggio/depth-images"
+traced_images_folder = "testDataUnfiltered/caravaggio/traced-images"
+reduced_depth_images_folder = "testDataUnfiltered/caravaggio/reduced-depth-images"
+average_colors_folder = "testDataUnfiltered/caravaggio/average-colors"
 
 # Ensure output directories exist
 Path(depth_images_folder).mkdir(parents=True, exist_ok=True)
@@ -21,12 +22,22 @@ Path(reduced_depth_images_folder).mkdir(parents=True, exist_ok=True)
 Path(average_colors_folder).mkdir(parents=True, exist_ok=True)
 
 # Load the model and processor
+
+if torch.backends.mps.is_available():
+    DEVICE = "mps"
+elif torch.cuda.is_available():
+    DEVICE = "cuda"
+else:
+    DEVICE = "cpu"
+
 processor = AutoImageProcessor.from_pretrained("LiheYoung/depth-anything-large-hf")
-model = AutoModelForDepthEstimation.from_pretrained("LiheYoung/depth-anything-large-hf").to("mps")
+model = AutoModelForDepthEstimation.from_pretrained(
+    "LiheYoung/depth-anything-large-hf"
+).to(DEVICE)
 
 
 def convert_image_to_depth_image(img):
-    input_tensor = processor(images=img, return_tensors="pt").to("mps")
+    input_tensor = processor(images=img, return_tensors="pt").to(DEVICE)
     with torch.no_grad():
         outputs = model(**input_tensor)
         depth = outputs.predicted_depth.squeeze().cpu().numpy()
@@ -42,7 +53,9 @@ def get_pixel_coordinates_by_color(image):
 
     color_names = ["c1", "c2", "c3", "c4"]
     color_coordinates = {name: [] for name in color_names}
-    color_mapping = {tuple(color): name for color, name in zip(unique_colors, color_names)}
+    color_mapping = {
+        tuple(color): name for color, name in zip(unique_colors, color_names)
+    }
 
     for y in range(image_rgb.shape[0]):
         for x in range(image_rgb.shape[1]):
@@ -54,7 +67,7 @@ def get_pixel_coordinates_by_color(image):
 
 
 def get_average_color(image, coordinates, filename, color_name):
-    cropped_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/cropped-images"
+    cropped_images_folder = "testDataUnfiltered/caravaggio/cropped-images"
     cropped_image_paths = []
 
     if not coordinates:
@@ -62,20 +75,10 @@ def get_average_color(image, coordinates, filename, color_name):
         return 0, 0, 0  # Default to black if no coordinates are provided
 
     colors = []
-    for (x, y) in coordinates:
+    for x, y in coordinates:
         if 0 <= x < image.shape[1] and 0 <= y < image.shape[0]:
             color = image[y, x]
             colors.append(color)
-
-            # Save the cropped portion of the original image
-            x1 = max(x - 10, 0)
-            x2 = min(x + 10, image.shape[1])
-            y1 = max(y - 10, 0)
-            y2 = min(y + 10, image.shape[0])
-            cropped_image = image[y1:y2, x1:x2]
-            cropped_image_path = os.path.join(cropped_images_folder, f"{filename}-{color_name}.png")
-            cv2.imwrite(cropped_image_path, cropped_image)
-            cropped_image_paths.append(cropped_image_path)
         else:
             print(f"Invalid coordinates: ({x}, {y})")
 
@@ -139,7 +142,11 @@ def create_color_block_image(colors, block_size=50):
 
 def process_images():
     saved_image_paths = []
-    files = [f for f in os.listdir(input_images_folder) if f.lower().endswith(('.jpg', '.png'))]
+    files = [
+        f
+        for f in os.listdir(input_images_folder)
+        if f.lower().endswith((".jpg", ".png"))
+    ]
     for filename in tqdm(files, desc="Processing Images"):
         image_path = os.path.join(input_images_folder, filename)
         image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
@@ -149,7 +156,9 @@ def process_images():
             # Step 1: Convert to depth image
             depth_img = convert_image_to_depth_image(image)
             depth_img = cv2.resize(depth_img, (256, 256))  # Resize to 256x256
-            depth_img = cv2.normalize(depth_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+            depth_img = cv2.normalize(
+                depth_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+            )
             depth_img = np.uint8(depth_img)
             depth_img_colored = cv2.applyColorMap(depth_img, cv2.COLORMAP_INFERNO)
             depth_output_path = os.path.join(depth_images_folder, f"depth-{filename}")
@@ -159,7 +168,9 @@ def process_images():
 
             # Step 2: Reduce colors in the depth image
             reduced_depth_image = reduce_colors(depth_img_colored)
-            reduced_depth_output_path = os.path.join(reduced_depth_images_folder, f"reduced-{filename}")
+            reduced_depth_output_path = os.path.join(
+                reduced_depth_images_folder, f"reduced-{filename}"
+            )
             cv2.imwrite(reduced_depth_output_path, reduced_depth_image)
             print(f"Saved reduced depth image for {filename}")
 
@@ -168,21 +179,27 @@ def process_images():
 
             # Step 4: Get average colors from the original image
             original_img_colors = [
-                get_average_color(image, color_coordinates['c1'], filename, 'c1'),
-                get_average_color(image, color_coordinates['c2'], filename, 'c2'),
-                get_average_color(image, color_coordinates['c3'], filename, 'c3'),
-                get_average_color(image, color_coordinates['c4'], filename, 'c4'),
+                get_average_color(image, color_coordinates["c1"], filename, "c1"),
+                get_average_color(image, color_coordinates["c2"], filename, "c2"),
+                get_average_color(image, color_coordinates["c3"], filename, "c3"),
+                get_average_color(image, color_coordinates["c4"], filename, "c4"),
             ]
 
             # Create and save the average colors block image
             average_colors_image = create_color_block_image(original_img_colors)
-            average_colors_output_path = os.path.join(average_colors_folder, f"average-colors-{filename}")
+            average_colors_output_path = os.path.join(
+                average_colors_folder, f"average-colors-{filename}"
+            )
             cv2.imwrite(average_colors_output_path, average_colors_image)
             print(f"Saved average colors image for {filename}")
 
             # Step 5: Extract and replace colors
-            traced_image = extract_and_replace_colors(reduced_depth_image, original_img_colors)
-            traced_output_path = os.path.join(traced_images_folder, f"traced-{filename}")
+            traced_image = extract_and_replace_colors(
+                reduced_depth_image, original_img_colors
+            )
+            traced_output_path = os.path.join(
+                traced_images_folder, f"traced-{filename}"
+            )
             cv2.imwrite(traced_output_path, traced_image)
             print(f"Saved traced image for {filename}")
         else:
