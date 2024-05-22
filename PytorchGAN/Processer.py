@@ -237,7 +237,7 @@ class PostProcesser(object):
                 seed_point = (indexes[toSample][1], indexes[toSample][0])  # Note the reversal of x and y coordinates
                 #fill_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
-                mask = np.zeros((252,252), np.uint8)
+                mask = np.zeros((image.shape[0]+2,image.shape[1]+2), np.uint8)
                 #num, white_image, filled_mask, rect = cv2.floodFill(white_image, mask, seed_point, (100,100,100), loDiff=50, upDiff=100, flags = 4  | (255 << 8))
                 num, white_image, filled_mask, rect = cv2.floodFill(white_image, mask, seed_point, (0,0,0), loDiff=50, upDiff=100)
 
