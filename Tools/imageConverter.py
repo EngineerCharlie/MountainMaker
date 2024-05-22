@@ -23,7 +23,7 @@ for filename in file_list:
         print(f"Converted {i+1} photos")
     # decode the image with color
     image = cv2.imread(filepath)
-    if image.shape[0] < 256:
+    if image.shape[0] < 256 and image.shape[1] < 256:
         pass
     image_scaled = resize_and_center_crop_image(image, 256, 256)
     processed = PostProcesser.ProcessToImages(image_scaled)
