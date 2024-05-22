@@ -11,9 +11,14 @@ from sklearn.cluster import MiniBatchKMeans
 input_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/input-images"
 depth_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/depth-images"
 traced_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/traced-images"
+reduced_depth_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/reduced-depth-images"
+average_colors_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/average-colors"
 
-# Ensure output directory exists
+# Ensure output directories exist
 Path(depth_images_folder).mkdir(parents=True, exist_ok=True)
+Path(traced_images_folder).mkdir(parents=True, exist_ok=True)
+Path(reduced_depth_images_folder).mkdir(parents=True, exist_ok=True)
+Path(average_colors_folder).mkdir(parents=True, exist_ok=True)
 
 # Load the model and processor
 processor = AutoImageProcessor.from_pretrained("LiheYoung/depth-anything-large-hf")
@@ -28,67 +33,108 @@ def convert_image_to_depth_image(img):
     return depth
 
 
-def extract_and_replace_colors(img):
-    # Declare color palette
-    new_colors = [(22, 138, 173), (106, 153, 78), (56, 102, 65), (19, 42, 19)]
+def get_pixel_coordinates_by_color(image):
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    unique_colors = np.unique(image_rgb.reshape(-1, image_rgb.shape[2]), axis=0)
 
-    # Ensure new_colors has exactly 4 colors
-    if len(new_colors) != 4:
-        raise ValueError("new_colors must contain exactly 4 colors.")
+    if len(unique_colors) != 4:
+        raise ValueError("The image does not contain exactly 4 unique colors")
 
-    # Get unique colors in the image
+    color_names = ["c1", "c2", "c3", "c4"]
+    color_coordinates = {name: [] for name in color_names}
+    color_mapping = {tuple(color): name for color, name in zip(unique_colors, color_names)}
+
+    for y in range(image_rgb.shape[0]):
+        for x in range(image_rgb.shape[1]):
+            pixel_color = tuple(image_rgb[y, x])
+            color_name = color_mapping[pixel_color]
+            color_coordinates[color_name].append((x, y))
+
+    return color_coordinates
+
+
+def get_average_color(image, coordinates, filename, color_name):
+    cropped_images_folder = "/Users/diegovelotto/Documents/GitHub/MountainMaker/Diego/renaissance/cropped-images"
+    cropped_image_paths = []
+
+    if not coordinates:
+        print("No coordinates provided.")
+        return 0, 0, 0  # Default to black if no coordinates are provided
+
+    colors = []
+    for (x, y) in coordinates:
+        if 0 <= x < image.shape[1] and 0 <= y < image.shape[0]:
+            color = image[y, x]
+            colors.append(color)
+
+            # Save the cropped portion of the original image
+            x1 = max(x - 10, 0)
+            x2 = min(x + 10, image.shape[1])
+            y1 = max(y - 10, 0)
+            y2 = min(y + 10, image.shape[0])
+            cropped_image = image[y1:y2, x1:x2]
+            cropped_image_path = os.path.join(cropped_images_folder, f"{filename}-{color_name}.png")
+            cv2.imwrite(cropped_image_path, cropped_image)
+            cropped_image_paths.append(cropped_image_path)
+        else:
+            print(f"Invalid coordinates: ({x}, {y})")
+
+    if colors:
+        average_color = np.mean(colors, axis=0).astype(int)
+        print(f"Average color for coordinates: {average_color}")
+        return tuple(average_color)
+    else:
+        print("No valid colors found.")
+        return 0, 0, 0  # Default to black if no valid colors are found
+
+
+def extract_and_replace_colors(img, original_img_colors):
     unique_colors = np.unique(img.reshape(-1, img.shape[2]), axis=0)
-
-    # Ensure the image has exactly 4 unique colors
     if unique_colors.shape[0] != 4:
         raise ValueError("The input image must contain exactly 4 unique colors.")
 
-    # Convert unique colors to L*a*b* color space for lightness comparison
     lab_colors = cv2.cvtColor(np.uint8([unique_colors]), cv2.COLOR_RGB2LAB)[0]
-
-    # Sort colors based on lightness (L* value)
     sorted_indices = np.argsort(lab_colors[:, 0])
     sorted_colors = unique_colors[sorted_indices]
 
-    # Create a mapping from the sorted colors to the new colors
-    color_mapping = {tuple(sorted_colors[i]): new_colors[i] for i in range(4)}
+    color_mapping = {tuple(sorted_colors[i]): original_img_colors[i] for i in range(4)}
 
-    # Replace the colors in the image
     replaced_img = np.zeros_like(img)
     for y in range(img.shape[0]):
         for x in range(img.shape[1]):
             replaced_img[y, x] = color_mapping[tuple(img[y, x])]
 
     replaced_img = cv2.cvtColor(replaced_img, cv2.COLOR_BGR2RGB)
-
     return replaced_img
 
 
 def reduce_colors(img, num_colors=4):
-    # define the contrast and brightness value
-    contrast = 6.  # Contrast control ( 0 to 127)
-    brightness = 1.  # Brightness control (0-100)
-    # call addWeighted function. use beta = 0 to effectively only
+    contrast = 6.0
+    brightness = 1.0
     img = cv2.addWeighted(img, contrast, img, 0, brightness)
-
     img = cv2.bilateralFilter(img, 15, 120, 120)
-    # Convert the image from RGB to L*a*b* color space
     lab_image = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
-    # Reshape the image to a 2D array of pixels
     pixel_values = lab_image.reshape((-1, 3))
-    # Apply k-means clustering
     clt = MiniBatchKMeans(n_clusters=num_colors)
     labels = clt.fit_predict(pixel_values)
-    # Create the quantized image based on the cluster centers
     quant = clt.cluster_centers_.astype("uint8")[labels]
     quant = quant.reshape(img.shape)
-    # Convert the quantized image from L*a*b* back to RGB
     quant = cv2.cvtColor(quant, cv2.COLOR_LAB2RGB)
+    return quant
 
-    # Recolor with the nature color palette
-    final_output = extract_and_replace_colors(quant)
 
-    return final_output
+def create_color_block_image(colors, block_size=50):
+    num_colors = len(colors)
+    height = block_size * num_colors
+    width = block_size
+    color_block_image = np.zeros((height, width, 3), dtype=np.uint8)
+
+    for i, color in enumerate(colors):
+        start_y = i * block_size
+        end_y = start_y + block_size
+        color_block_image[start_y:end_y, :] = color
+
+    return color_block_image
 
 
 def process_images():
@@ -100,23 +146,45 @@ def process_images():
         if image is not None:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
+            # Step 1: Convert to depth image
             depth_img = convert_image_to_depth_image(image)
+            depth_img = cv2.resize(depth_img, (256, 256))  # Resize to 256x256
             depth_img = cv2.normalize(depth_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
             depth_img = np.uint8(depth_img)
             depth_img_colored = cv2.applyColorMap(depth_img, cv2.COLORMAP_INFERNO)
-
-            # Save the depth image
             depth_output_path = os.path.join(depth_images_folder, f"depth-{filename}")
             cv2.imwrite(depth_output_path, depth_img_colored)
             saved_image_paths.append(depth_output_path)
-            print(f"Saved depth {filename} to {depth_output_path}")
+            print(f"Saved depth image for {filename}")
 
-            # Save the reduced colors image
-            traced_image = reduce_colors(depth_img_colored)
+            # Step 2: Reduce colors in the depth image
+            reduced_depth_image = reduce_colors(depth_img_colored)
+            reduced_depth_output_path = os.path.join(reduced_depth_images_folder, f"reduced-{filename}")
+            cv2.imwrite(reduced_depth_output_path, reduced_depth_image)
+            print(f"Saved reduced depth image for {filename}")
+
+            # Step 3: Get pixel coordinates by color
+            color_coordinates = get_pixel_coordinates_by_color(reduced_depth_image)
+
+            # Step 4: Get average colors from the original image
+            original_img_colors = [
+                get_average_color(image, color_coordinates['c1'], filename, 'c1'),
+                get_average_color(image, color_coordinates['c2'], filename, 'c2'),
+                get_average_color(image, color_coordinates['c3'], filename, 'c3'),
+                get_average_color(image, color_coordinates['c4'], filename, 'c4'),
+            ]
+
+            # Create and save the average colors block image
+            average_colors_image = create_color_block_image(original_img_colors)
+            average_colors_output_path = os.path.join(average_colors_folder, f"average-colors-{filename}")
+            cv2.imwrite(average_colors_output_path, average_colors_image)
+            print(f"Saved average colors image for {filename}")
+
+            # Step 5: Extract and replace colors
+            traced_image = extract_and_replace_colors(reduced_depth_image, original_img_colors)
             traced_output_path = os.path.join(traced_images_folder, f"traced-{filename}")
             cv2.imwrite(traced_output_path, traced_image)
-            print(f"Saved traced {filename} to {traced_output_path}")
-
+            print(f"Saved traced image for {filename}")
         else:
             print(f"Failed to load {filename}")
 
