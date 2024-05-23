@@ -297,10 +297,8 @@ class Paint:
                         self.getcolpic()
 
                     if yp == -2 and xp == 0:  # MAKE MOUNTAIN
-                        # TODO: MAKE MOUNTAIN LOGIC
-                        print("saving?")
                         pygame.image.save(self.img, "my_mountain.png")
-                        print("saved??")
+                        # TODO: exit?
                         pass
                     if yp == -2 and xp == 1:  # undo
                         if len(self.undo) >= 2:
