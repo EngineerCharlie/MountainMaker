@@ -29,7 +29,7 @@ AIRDENS = 10
 AIRSIZE = 4
 
 # flood fill speed (lines per frame)
-FILL_SPEED = 100
+FILL_SPEED = 256
 
 # palette box size
 PALBW = 50
@@ -37,20 +37,50 @@ PALBW = 50
 # palette columns
 PALHE = 3
 
-# palette rows
-PALROWS = 11  # RES[1] // PALBW - 3
-
 # toolbox pixel height
-TOOL_HEIGHT = 3 * 50
+TOOL_HEIGHT = 2 * 50
 
 # background color
 COLBG = 0x202020
 
-PALETTE_NUMBER = 2
+PALETTE_NUMBER = 0
 
 # color palettes in RGB hex:
 
 # default colors
+# peak juhasz
+cols_j = [
+    0xFFFFFF,
+    0xC0C0C0,
+    0x808080,
+    0x404040,
+    0x5C4033,
+    0x91624C,
+    0x004084,
+    0x2475CC,
+    0x056232,
+    0x16A45A,
+    0xF56A00,
+]
+
+cols_dv = [
+    0x0D1B2A,
+    0x1B263B,
+    0x415A77,
+    0x778DA9,
+    0xE0E1DD,
+    0x132A13,
+    0x31572C,
+    0x4F772D,
+    0x90A955,
+    0xECF39E,
+    0x562A0E,
+    0x78380C,
+    0xC8691C,
+    0xD09259,
+    0xE4CEAF,
+]
+
 cols_s = [
     0,
     0x404040,  # black, white, and grays
@@ -292,6 +322,8 @@ cols_pick = [
 
 # palettes and palette names
 palettes = [
+    (cols_dv, "Sexy diego palette"),
+    (cols_j, "Peak Juhasz"),
     (cols_s, "default"),
     (cols_g, "GNOME"),
     (cols_p, "PICO-8"),
@@ -304,24 +336,33 @@ palettes = [
     (cols_pick, "empty"),
 ]
 
+# palette rows
+num_colours = len(palettes[PALETTE_NUMBER][1])
+print(num_colours)
+extra_row = -1 if num_colours % 3 == 0 else 1
+print(num_colours % 3 == 0)
+PALROWS = (num_colours // 3) + extra_row  # 4  # RES[1] // PALBW - 3
+
 # tool names
 tname = [
-    "dotted freehand",
+    "fill tool",
     "continuous freehand",
     "straight lines",
+    "mountainify",
     "curves",
     "airbrush",
-    "fill tool",
+    "dotted freehand",
 ]
 
-T_DOT = 0
+T_FIL = 0
 T_CON = 1
 T_STR = 2
+T_MTN = 3
 T_CUR = 3
 T_AIR = 4
-T_FIL = 5
+T_DOT = 5
 
-T_ALL = "dot", "con", "str", "cur", "air", "fil"
+T_ALL = "fil", "con", "str"
 
 # load icon images
 icons = []
@@ -339,8 +380,9 @@ for n in T_ALL:
                 img2.set_at((x, y), (170, 170, 170))
     icons_dark.append(img2)
 
-brico_s = pygame.image.load(os.path.join("PaintApp/img", "brsmall.png"))
-brico_b = pygame.image.load(os.path.join("PaintApp/img", "brbig.png"))
+# brico_s = pygame.image.load(os.path.join("PaintApp/img", "brsmall.png"))
+# brico_b = pygame.image.load(os.path.join("PaintApp/img", "brbig.png"))
+b_mtn = pygame.image.load(os.path.join("PaintApp/img", "mtn_s.png"))
 b_undo = pygame.image.load(os.path.join("PaintApp/img", "undo.png"))
 b_clear = pygame.image.load(os.path.join("PaintApp/img", "clear.png"))
 
@@ -428,7 +470,7 @@ class Paint:
     def __init__(self):
         pygame.init()
         self.palnum = PALETTE_NUMBER
-        height = max(RES[1], PALBW * PALROWS)
+        height = max(RES[1], TOOL_HEIGHT + PALBW * PALROWS)
         self.screen = pygame.display.set_mode((RES[0] + PALHE * PALBW, height))
         self.clock = pygame.time.Clock()
         # if len(sys.argv) > 1:
@@ -505,9 +547,9 @@ class Paint:
                         self.col = c
                         self.getcolpic()
 
-                    if yp == -3 and xp == 0:  # brush size
-                        self.small_brush = not self.small_brush
-                        self.title()
+                    if yp == -3 and xp == 0:  # MAKE MOUNTAIN
+                        # TODO: MAKE MOUNTAIN LOGIC
+                        pass
                     if yp == -3 and xp == 1:  # undo
                         if len(self.undo) >= 2:
                             self.img = self.undo[-2].copy()
@@ -666,7 +708,7 @@ class Paint:
         if self.tool == T_FIL:  # flood fill
             bb = ""
         pygame.display.set_caption(
-            f"Paint ({tname[self.tool]}{bb}, {palettes[self.palnum][1]} palette)"
+            f"MountainMaker ({tname[self.tool]}, {palettes[self.palnum][1]} palette)"
         )
 
     def update(self):
@@ -758,10 +800,11 @@ class Paint:
 
         # draw toolbox
         if not self.hide:
-            if self.small_brush:
-                self.screen.blit(brico_s, (RES[0], 0))
-            else:
-                self.screen.blit(brico_b, (RES[0], 0))
+            # if self.small_brush:
+            #     self.screen.blit(brico_s, (RES[0], 0))
+            # else:
+            #     self.screen.blit(brico_b, (RES[0], 0))
+            self.screen.blit(b_mtn, (RES[0], 0))
             self.screen.blit(b_undo, (RES[0] + 50, 0))
             self.screen.blit(b_clear, (RES[0] + 100, 0))
 
@@ -769,11 +812,11 @@ class Paint:
             self.screen.blit(is_act(1, self.tool), (RES[0] + 50, 50))
             self.screen.blit(is_act(2, self.tool), (RES[0] + 100, 50))
 
-            self.screen.blit(is_act(3, self.tool), (RES[0], 100))
-            self.screen.blit(is_act(4, self.tool), (RES[0] + 50, 100))
-            self.screen.blit(is_act(5, self.tool), (RES[0] + 100, 100))
+            # self.screen.blit(is_act(3, self.tool), (RES[0], 100))
+            # self.screen.blit(is_act(4, self.tool), (RES[0] + 50, 100))
+            # self.screen.blit(is_act(5, self.tool), (RES[0] + 100, 100))
 
-            self.screen.blit(self.colpic, (RES[0], 150))
+            self.screen.blit(self.colpic, (RES[0], 100))
         pygame.display.flip()
 
 
