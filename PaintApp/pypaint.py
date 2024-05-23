@@ -46,6 +46,8 @@ TOOL_HEIGHT = 3 * 50
 # background color
 COLBG = 0x202020
 
+PALETTE_NUMBER = 2
+
 # color palettes in RGB hex:
 
 # default colors
@@ -425,7 +427,7 @@ def is_act(a, b):
 class Paint:
     def __init__(self):
         pygame.init()
-        self.palnum = 0
+        self.palnum = PALETTE_NUMBER
         height = max(RES[1], PALBW * PALROWS)
         self.screen = pygame.display.set_mode((RES[0] + PALHE * PALBW, height))
         self.clock = pygame.time.Clock()

@@ -123,16 +123,16 @@ def main():
     # Loads in pre-trained modeel
     if config.LOAD_MODEL:
         load_checkpoint(
-            config.CHECKPOINT_GEN,
+            config.LOAD_GEN + ".tar",
             generator,
             optimizer_gen,
-            config.LEARNING_RATE,
+            config.LEARNING_RATE_GEN,
         )
         load_checkpoint(
-            config.CHECKPOINT_DISC,
+            config.LOAD_DISC + ".tar",
             discriminator,
             optimizer_disc,
-            config.LEARNING_RATE,
+            config.LEARNING_RATE_DISC,
         )
 
     # Loads data from compressed numpy array and returns the source and target images
@@ -178,26 +178,16 @@ def main():
         )
         save_interval = config.SAVE_INTERVAL
         if config.SAVE_MODEL and epoch % save_interval == 0 and epoch > 0:
-            if epoch % (4 * save_interval):  # make backup of model
-                save_checkpoint(
-                    generator,
-                    optimizer_gen,
-                    filename=config.CHECKPOINT_GEN + str(epoch) +".tar",
-                )
-                save_checkpoint(
-                    discriminator,
-                    optimizer_disc,
-                    filename=config.CHECKPOINT_DISC + str(epoch) + ".tar",
-                )
-            else:
-                save_checkpoint(
-                    generator, optimizer_gen, filename=config.CHECKPOINT_GEN + ".tar"
-                )
-                save_checkpoint(
-                    discriminator,
-                    optimizer_disc,
-                    filename=config.CHECKPOINT_DISC + ".tar",
-                )
+            save_checkpoint(
+                generator,
+                optimizer_gen,
+                filename=config.CHECKPOINT_GEN + str(epoch) + ".tar",
+            )
+            save_checkpoint(
+                discriminator,
+                optimizer_disc,
+                filename=config.CHECKPOINT_DISC + str(epoch) + ".tar",
+            )
 
         save_some_examples(
             generator,

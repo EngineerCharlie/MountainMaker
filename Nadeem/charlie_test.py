@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from PIL import Image
 
 filename = "GAN/mount_sketch_diego.jpg"
-model_filename = config.EVALUATION_GEN_GEN + "135.tar"
+model_filename = config.EVALUATION_GEN + "135.tar"
 
 torch.backends.cudnn.benchmark = True
 gen = Generator(in_channels=3, features=64).to(config.DEVICE)
