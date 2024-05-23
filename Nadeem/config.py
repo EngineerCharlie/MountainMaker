@@ -1,8 +1,12 @@
 import torch
 import Nadeem.config_local as config_local
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
+if torch.backends.mps.is_available():
+    DEVICE = "mps"
+elif torch.cuda.is_available():
+    DEVICE = "cuda"
+else:
+    DEVICE = "cpu"
 TRAIN_DIR = config_local.TRAIN_DIR
 VAL_DIR = config_local.VAL_DIR
 LEARNING_RATE_DISC = 5e-5
