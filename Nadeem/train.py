@@ -8,9 +8,7 @@ from Nadeem.Generator import Generator
 from Nadeem.Discriminator import Discriminator
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from torchvision.utils import save_image
 from numpy import load
-from matplotlib import pyplot
 
 torch.backends.cudnn.benchmark = True
 
@@ -100,7 +98,7 @@ def train_fn(
     print("G loss = " + str(generator_overall_losses.mean().item()))
 
 
-def main():
+def run():
     discriminator = Discriminator(in_channels=3).to(config.DEVICE)
     generator = Generator(in_channels=3, features=64).to(config.DEVICE)
 
@@ -163,6 +161,7 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
     for epoch in range(config.NUM_EPOCHS):
+        epoch = epoch+46
         if epoch % 5 == 0:
             print(f"Epoch number {epoch}")
         train_fn(
@@ -195,8 +194,3 @@ def main():
             epoch,
             folder=config.SAMPLE_FOLDER,
         )
-
-
-if __name__ == "__main__":
-    print(config.DEVICE)
-    main()

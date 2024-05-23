@@ -1,3 +1,7 @@
 import Nadeem.train as train
+def main():
+    train.run()
 
-train.main()
+if __name__ == "__main__":
+    # print(config.DEVICE)
+    main()
