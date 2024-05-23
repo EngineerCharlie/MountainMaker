@@ -1,4 +1,4 @@
-import config
+import Nadeem.config as config
 from Nadeem.GenerateMountain import generate_mountain_from_file
 
 filename = "GAN/mount_sketch_diego.jpg"

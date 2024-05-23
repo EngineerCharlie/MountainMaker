@@ -1,9 +1,9 @@
 import torch
 import numpy as np
-from utils import load_checkpoint
+from Nadeem.utils import load_checkpoint
 import torch.optim as optim
-import config
-from Generator import Generator
+import Nadeem.config as config
+from Nadeem.Generator import Generator
 from matplotlib import pyplot as plt
 from PIL import Image
 

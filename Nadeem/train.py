@@ -1,11 +1,11 @@
 import torch
 import numpy as np
-from utils import save_checkpoint, load_checkpoint, save_some_examples
+from Nadeem.utils import save_checkpoint, load_checkpoint, save_some_examples
 import torch.nn as nn
 import torch.optim as optim
-import config
-from Generator import Generator
-from Discriminator import Discriminator
+import Nadeem.config as config
+from Nadeem.Generator import Generator
+from Nadeem.Discriminator import Discriminator
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torchvision.utils import save_image
