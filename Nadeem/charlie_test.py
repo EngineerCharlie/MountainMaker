@@ -7,16 +7,23 @@ from Generator import Generator
 from matplotlib import pyplot as plt
 from PIL import Image
 
+filename = "GAN/mount_sketch_diego.jpg"
+model_filename = config.EVALUATION_GEN_GEN + "135.tar"
+
 torch.backends.cudnn.benchmark = True
 gen = Generator(in_channels=3, features=64).to(config.DEVICE)
-opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE, betas=(0.5, 0.999))
+gen.eval()
+opt_gen = optim.Adam(
+    gen.parameters(),
+    lr=config.LEARNING_RATE_GEN,
+    betas=(config.GEN_BETA1, config.GEN_BETA2),
+)
 load_checkpoint(
-    config.CHECKPOINT_GEN,
+    model_filename,
     gen,
     opt_gen,
-    config.LEARNING_RATE,
+    config.LEARNING_RATE_GEN,
 )
-gen.eval()
 
 
 def load_single_image(filename, target_size=(256, 256)):
@@ -40,7 +47,6 @@ def load_single_image(filename, target_size=(256, 256)):
     return img_tensor
 
 
-filename = "GAN/have_a_go_image.jpg"
 image = load_single_image(filename)
 output_image = gen(image)
 

@@ -176,32 +176,34 @@ def main():
             generator_scaler,
             discriminator_scaler,
         )
-        save_interval = 15
+        save_interval = config.SAVE_INTERVAL
         if config.SAVE_MODEL and epoch % save_interval == 0 and epoch > 0:
             if epoch % (4 * save_interval):  # make backup of model
                 save_checkpoint(
                     generator,
                     optimizer_gen,
-                    filename=config.CHECKPOINT_GEN + str(epoch),
+                    filename=config.CHECKPOINT_GEN + str(epoch) +".tar",
                 )
                 save_checkpoint(
                     discriminator,
                     optimizer_disc,
-                    filename=config.CHECKPOINT_DISC + str(epoch),
+                    filename=config.CHECKPOINT_DISC + str(epoch) + ".tar",
                 )
             else:
                 save_checkpoint(
-                    generator, optimizer_gen, filename=config.CHECKPOINT_GEN
+                    generator, optimizer_gen, filename=config.CHECKPOINT_GEN + ".tar"
                 )
                 save_checkpoint(
-                    discriminator, optimizer_disc, filename=config.CHECKPOINT_DISC
+                    discriminator,
+                    optimizer_disc,
+                    filename=config.CHECKPOINT_DISC + ".tar",
                 )
 
         save_some_examples(
             generator,
             val_loader,
             epoch,
-            folder="Nadeem/evaluation/evaluation - 1750 im",
+            folder=config.SAMPLE_FOLDER,
         )
 
 

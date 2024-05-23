@@ -1,6 +1,10 @@
-#Input your file paths  here
+# Input your file paths  here
 
-TRAIN_DIR = "C:/.../testDataUnfiltered/mountains_256.npz"
-VAL_DIR = "C:/.../testDataUnfiltered/mountains_256.npz"
-CHECKPOINT_DISC = "C:/.../output/output5/disc.pth.tar"
-CHECKPOINT_GEN = "C:/.../output/output5/gen.pth.tar"
+TRAIN_DIR = "testDataUnfiltered/mountains_Diego.npz"
+VAL_DIR = "testDataUnfiltered/mountains_Diego.npz"
+
+CHECKPOINT_DISC = "output/output6/disc.pth"
+CHECKPOINT_GEN = "output/output6/gen.pth"
+EVALUATION_GEN = "output/output5/gen.pth"
+
+SAMPLE_FOLDER = "output/output6/samples/"
