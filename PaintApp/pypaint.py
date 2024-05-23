@@ -4,6 +4,8 @@
 
 import pygame, os, sys, time, random, math
 
+PALETTE_NUMBER = 0
+
 # canvas size
 RES = 256, 256
 
@@ -43,7 +45,6 @@ TOOL_HEIGHT = 2 * 50
 # background color
 COLBG = 0x202020
 
-PALETTE_NUMBER = 0
 
 # color palettes in RGB hex:
 
@@ -81,268 +82,16 @@ cols_dv = [
     0xE4CEAF,
 ]
 
-cols_s = [
-    0,
-    0x404040,  # black, white, and grays
-    0x606060,
-    0x808080,
-    0xA0A0A0,
-    0xB0B0B0,
-    0xD0D0D0,
-    0xFFFFFF,
-    0xFF0000,  # full-intensity colors
-    0xFFB000,
-    0x00FF00,
-    0x0000FF,
-    0xFFFF00,
-    0x00FFFF,
-    0xFF00FF,
-    0xAA0000,  # darker colors
-    0x884000,
-    0x00AA00,
-    0x0000AA,
-    0xAAAA00,
-    0x00AAAA,
-    0xAA00AA,
-    0xFF8080,  # pastel colors
-    0xFFD080,
-    0x80FF80,
-    0x8080FF,
-    0xFFFF80,
-    0x80FFFF,
-    0xFF80FF,
-]
-
-# GNOME
-cols_g = [
-    0,
-    0xFFFFFF,
-    0x555753,
-    0xCC0000,
-    0xF57900,
-    0xEDD400,
-    0x73D216,
-    0x3465A4,
-    0x75507B,
-    0xC17D11,
-]
-
-# PICO-8
-cols_p = [
-    0,
-    0xFFFFFF,
-    0x1D2B53,
-    0x7E2553,
-    0x008751,
-    0xAB5236,
-    0x5F574F,
-    0xC2C3C7,
-    0xFFF1E8,
-    0xFF004D,
-    0xFFA300,
-    0xFFEC27,
-    0x00E436,
-    0x29ADFF,
-    0x83769C,
-    0xFF77A8,
-    0xFFCCAA,
-]
-
-# DeluxePaint (Dan Silva)
-cols_d = [
-    0,
-    0xA0A0A0,
-    0xEE0000,
-    0xAA0000,
-    0xDD8800,
-    0xFFEE00,
-    0x88FF00,
-    0x008800,
-    0x00BB66,
-    0x00DDDD,
-    0x00AAFF,
-    0x0077CC,
-    0x0000FF,
-    0x7700FF,
-    0xCC00EE,
-    0xCC0088,
-    0x662200,
-    0xEE5522,
-    0xAA5522,
-    0xFFCCAA,
-    0x333333,
-    0x444444,
-    0x555555,
-    0x666666,
-    0x777777,
-    0x888888,
-    0x999999,
-    0xAAAAAA,
-    0xCCCCCC,
-    0xDDDDDD,
-    0xEEEEEE,
-    0xFFFFFF,
-]
-
-# MS Paint classic
-cols_msp = [
-    0xFFFFFF,
-    0,
-    0xC0C0C0,
-    0x808080,
-    0xFF0000,
-    0x800000,
-    0xFFFF00,
-    0x808000,
-    0x00FF00,
-    0x008000,
-    0x00FFFF,
-    0x008080,
-    0x0000FF,
-    0x000080,
-    0xFF00FF,
-    0x800080,
-    0xFFFF80,
-    0x808040,
-    0x00FF80,
-    0x004040,
-    0x80FFFF,
-    0x0080FF,
-    0x8080FF,
-    0x004080,
-    0xFF0080,
-    0x400080,
-    0xFF8040,
-    0x804000,
-]
-
-# Pinta
-cols_pt = [
-    0xFFFFFF,
-    0,
-    0xA0A0A0,
-    0x808080,
-    0x404040,
-    0x303030,
-    0xFF0000,
-    0xFF7F7F,
-    0xFF6A00,
-    0xFFB27F,
-    0xFFD800,
-    0xFFE97F,
-    0xB6FF00,
-    0xDAFF7F,
-    0x4CFF00,
-    0xA5FF7F,
-    0x00FF21,
-    0x7FFF8E,
-    0x00FF90,
-    0x7FFFC5,
-    0x00FFFF,
-    0x7FFFFF,
-    0x0094FF,
-    0x7FC9FF,
-    0x0026FF,
-    0x7F92FF,
-    0x4800FF,
-    0xA17FFF,
-    0xB200FF,
-    0xD67FFF,
-    0xFF00DC,
-    0xFF7FED,
-    0xFF006E,
-    0xFF7FB6,
-]
-
-# SuperPaint (Richard Shoup)
-cols_sp = [
-    0xE0E0E0,
-    0,
-    0xE00300,
-    0x00E003,
-    0x0300E0,
-    0xE08D00,
-    0xE000E0,
-    0x404040,
-    0x808080,
-    0xC0C0C0,
-    0xE0AE53,
-    0x70A8E0,
-    0x6FE078,
-    0xE0846F,
-    0xBF8500,
-    0xDFDF00,
-]
-
-# Minecraft dyes (before 1.12) from https://minecraft.wiki/w/Dyeing
-cols_mc1 = [
-    0xFFFFFF,
-    0x999999,
-    0x4C4C4C,
-    0x191919,
-    0x664C33,
-    0x993333,
-    0xD87F33,
-    0xE5E533,
-    0x7FCC19,
-    0x667F33,
-    0x4C7F99,
-    0x6699D8,
-    0x334CB2,
-    0x7F3FB2,
-    0xB24CD8,
-    0xF27FA5,
-]
-
-# current Minecraft dyes from https://minecraft.wiki/w/Dyeing#Color_values
-cols_mc2 = [
-    0xF9FFFE,
-    0x9D9D97,
-    0x474F52,
-    0x1D1D21,
-    0x835432,
-    0xB02E26,
-    0xF9801D,
-    0xFED83D,
-    0x80C71F,
-    0x5E7C16,
-    0x169C9C,
-    0x3AB3DA,
-    0x3C44AA,
-    0x8932B8,
-    0xC74EBD,
-    0xF38BAA,
-]
-
-# Mostly empty palette (meant for picking colors from images)
-cols_pick = [
-    0,
-    0xFFFFFF,
-]
-
 # palettes and palette names
 palettes = [
     (cols_dv, "Sexy diego palette"),
     (cols_j, "Peak Juhasz"),
-    (cols_s, "default"),
-    (cols_g, "GNOME"),
-    (cols_p, "PICO-8"),
-    (cols_d, "DeluxePaint"),
-    (cols_msp, "MS Paint"),
-    (cols_pt, "Pinta"),
-    (cols_sp, "SuperPaint"),
-    (cols_mc1, "old Minecraft"),
-    (cols_mc2, "new Minecraft"),
-    (cols_pick, "empty"),
 ]
 
 # palette rows
 num_colours = len(palettes[PALETTE_NUMBER][1])
-print(num_colours)
 extra_row = -1 if num_colours % 3 == 0 else 1
-print(num_colours % 3 == 0)
-PALROWS = (num_colours // 3) + extra_row  # 4  # RES[1] // PALBW - 3
-
+PALROWS = (num_colours // 3) + extra_row
 # tool names
 tname = [
     "fill tool",
@@ -547,38 +296,41 @@ class Paint:
                         self.col = c
                         self.getcolpic()
 
-                    if yp == -3 and xp == 0:  # MAKE MOUNTAIN
+                    if yp == -2 and xp == 0:  # MAKE MOUNTAIN
                         # TODO: MAKE MOUNTAIN LOGIC
+                        print("saving?")
+                        pygame.image.save(self.img, "my_mountain.png")
+                        print("saved??")
                         pass
-                    if yp == -3 and xp == 1:  # undo
+                    if yp == -2 and xp == 1:  # undo
                         if len(self.undo) >= 2:
                             self.img = self.undo[-2].copy()
                             self.undo = [self.undo[-1], self.undo[-2]]
-                    if yp == -3 and xp == 2:  # clear
+                    if yp == -2 and xp == 2:  # clear
                         self.undo.append(self.img.copy())
                         self.img.fill(0xFFFFFF)
 
-                    if yp == -2 and xp == 0:
+                    if yp == -1 and xp == 0:
                         self.tool = 0
                         self.title()
-                    if yp == -2 and xp == 1:
+                    if yp == -1 and xp == 1:
                         self.tool = 1
                         self.title()
-                    if yp == -2 and xp == 2:
+                    if yp == -1 and xp == 2:
                         self.tool = 2
                         self.line_start = 0, 0
                         self.title()
 
-                    if yp == -1 and xp == 0:
-                        self.tool = 3
-                        self.bezier = []
-                        self.title()
-                    if yp == -1 and xp == 1:
-                        self.tool = 4
-                        self.title()
-                    if yp == -1 and xp == 2:
-                        self.tool = 5
-                        self.title()
+                    # if yp == -1 and xp == 0:
+                    #     self.tool = 3
+                    #     self.bezier = []
+                    #     self.title()
+                    # if yp == -1 and xp == 1:
+                    #     self.tool = 4
+                    #     self.title()
+                    # if yp == -1 and xp == 2:
+                    #     self.tool = 5
+                    #     self.title()
 
                 elif event.button == 2:
                     self.small_brush = not self.small_brush
@@ -818,7 +570,3 @@ class Paint:
 
             self.screen.blit(self.colpic, (RES[0], 100))
         pygame.display.flip()
-
-
-c = Paint()
-c.run()
