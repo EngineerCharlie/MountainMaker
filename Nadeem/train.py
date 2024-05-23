@@ -160,8 +160,8 @@ def run():
     val_dataset = list(zip(in_reshaped, tar_reshaped))
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
-    for epoch in range(config.NUM_EPOCHS):
-        epoch = epoch+46
+    for epoch in range(config.NUM_EPOCHS-config.EPOCH_OFFSET):
+        epoch = epoch+config.EPOCH_OFFSET
         if epoch % 5 == 0:
             print(f"Epoch number {epoch}")
         train_fn(
@@ -176,7 +176,7 @@ def run():
             discriminator_scaler,
         )
         save_interval = config.SAVE_INTERVAL
-        if config.SAVE_MODEL and epoch % save_interval == 0 and epoch > 0:
+        if config.SAVE_MODEL and epoch % save_interval == 0 and epoch > config.EPOCH_OFFSET:
             save_checkpoint(
                 generator,
                 optimizer_gen,
