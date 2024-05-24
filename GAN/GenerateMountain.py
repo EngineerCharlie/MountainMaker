@@ -1,9 +1,9 @@
 import torch
 import numpy as np
-from Nadeem.utils import load_checkpoint
+from GAN.utils import load_checkpoint
 import torch.optim as optim
-import Nadeem.config as config
-from Nadeem.Generator import Generator
+import GAN.config as config
+from GAN.Generator import Generator
 from matplotlib import pyplot as plt
 from PIL import Image
 
