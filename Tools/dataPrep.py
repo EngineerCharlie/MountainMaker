@@ -31,7 +31,7 @@ def load_images(path_original, path_processed):
             )
             # convert to numpy array
             processed_image = img_to_array(processed_image)
-            # split into satellite and map
+            # split into drawified and photo
             src_list.append(processed_image)
             tar_list.append(original_image)
         except:
