@@ -21,3 +21,4 @@ archive.zip
 Nadeem/config_local.py
 /.idea
 /.eggs
+**/.DS_Store
