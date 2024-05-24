@@ -1,4 +1,4 @@
-import Nadeem.train as train
+import GAN.train as train
 def main():
     train.run()
 
