@@ -1,11 +1,11 @@
 import torch
 import numpy as np
-from Nadeem.utils import save_checkpoint, load_checkpoint, save_some_examples
+from GAN.utils import save_checkpoint, load_checkpoint, save_some_examples
 import torch.nn as nn
 import torch.optim as optim
-import Nadeem.config as config
-from Nadeem.Generator import Generator
-from Nadeem.Discriminator import Discriminator
+import GAN.config as config
+from GAN.Generator import Generator
+from GAN.Discriminator import Discriminator
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from numpy import load

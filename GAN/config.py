@@ -1,5 +1,5 @@
 import torch
-import Nadeem.config_local as config_local
+import GAN.config_local as config_local
 
 if torch.backends.mps.is_available():
     DEVICE = "mps"
