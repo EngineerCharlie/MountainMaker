@@ -1,16 +1,11 @@
-# NightSkyify
+# Mountainifier
 
-## Being a good githubber guide
+## Running the model
 
-- Work on personal stuff relating to the project in your own folder
-- Use the Python Black extension so we have consistent formatting
-- import numpy as np, import cv2 as cv2
-- Variable naming
-  - CamelCase for classes
-  - camelCase for functions
-  - snake_case for variables
-  - ALL_CAPS for constants
-  - Use descriptive variable names for code readability
+The model can be trained with Train.py
+The pipeline can be run with App.py
+Mountains can be generated on a 1-off basis with ControlledTest.py
+When using the model, all variables can be changed in GAN/config.py and model versions and datasets can be selected in GAN/config_local.py. 
 
 
 ## Setting up virtual environment (to avoid dependency hell)
