@@ -65,21 +65,30 @@ cols_j = [
 ]
 
 cols_dv = [
+    # Cool colours
     0x0D1B2A,
     0x1B263B,
     0x415A77,
     0x778DA9,
     0xE0E1DD,
+    # grey1
+    0x444444,
+    # Forest colours
     0x132A13,
     0x31572C,
     0x4F772D,
     0x90A955,
     0xECF39E,
+    # grey2
+    0x888888,
+    # Desert colours
     0x562A0E,
     0x78380C,
     0xC8691C,
     0xD09259,
     0xE4CEAF,
+    # grey3
+    0xBBBBBB,
 ]
 
 # palettes and palette names
@@ -90,7 +99,7 @@ palettes = [
 
 # palette rows
 num_colours = len(palettes[PALETTE_NUMBER][1])
-extra_row = -1 if num_colours % 3 == 0 else 1
+extra_row = 0 if num_colours % 3 == 0 else 1
 PALROWS = (num_colours // 3) + extra_row
 # tool names
 tname = [
