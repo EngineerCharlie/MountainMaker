@@ -127,8 +127,6 @@ class ColorConverter(object):
         distances[CColor.SNOW.value] = distances[CColor.SNOW.value] * mapped_centroid_SNOW
         '''
 
-
-        
         if(YParam[0] < 5):
             distances[CColor.SKY.value] = distances[CColor.SKY.value]/2.5       #if the region is connected to the top IT IS VERY LIKELY TO BE SKY
             distances[CColor.CLOUD.value] = distances[CColor.CLOUD.value]/1.25     #and IT IS VERY LIKELY TO BE CLOUD
@@ -140,16 +138,12 @@ class ColorConverter(object):
             distances[CColor.SKY.value] = distances[CColor.SKY.value]*2        #if the region is connected to the top IT IS UNLIKELY TO BE SKY
             distances[CColor.CLOUD.value] = distances[CColor.CLOUD.value]*2     #and IT IS UNLIKELY TO BE CLOUD
 
-
-
         if (YParam[1] > 245):
             distances[CColor.SKY.value] = 255 #if the region is connected to the bottom it CANNOT BE SKY
             distances[CColor.CLOUD.value] = 255 #it cannot be cloud
 
         if(centroid[1] > 100):
             distances[CColor.CLOUD.value] = 255 # if the region is in above pos 200 it CANNOT BE CLOUD
-
-
 
 
         index_of_smallest = np.argmin(distances)
