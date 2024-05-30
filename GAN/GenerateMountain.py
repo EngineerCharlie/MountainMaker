@@ -6,6 +6,7 @@ import GAN.config as config
 from GAN.Generator import Generator
 from matplotlib import pyplot as plt
 from PIL import Image
+import itertools
 
 
 def generate_mountain_from_file(
@@ -15,16 +16,17 @@ def generate_mountain_from_file(
         model_filename = config.EVALUATION_GEN + ".tar"
 
     torch.backends.cudnn.benchmark = True
-    gen = Generator(in_channels=3, features=64).to(config.DEVICE)
-    gen.eval()
-    opt_gen = optim.Adam(
-        gen.parameters(),
+    gen_G = Generator(in_channels=3, features=64).to(config.DEVICE)
+    gen_G.eval()
+    gen_F = Generator(in_channels=3, features=64).to(config.DEVICE)
+    gen_F.eval()
+    opt_gen = optim.Adam(itertools.chain(gen_G.parameters(), gen_F.parameters()),
         lr=config.LEARNING_RATE_GEN,
         betas=(config.GEN_BETA1, config.GEN_BETA2),
     )
     load_checkpoint(
         model_filename,
-        gen,
+        gen_G,
         opt_gen,
         config.LEARNING_RATE_GEN,
     )
@@ -50,7 +52,7 @@ def generate_mountain_from_file(
         return img_tensor
 
     image = load_single_image(filepath)
-    output_image = gen(image)
+    output_image = gen_G(image)
 
     # Convert output tensor to numpy array and reshape if necessary
     output_image_np = output_image.squeeze(0).detach().cpu().numpy()
@@ -100,10 +102,11 @@ def gen_mount_img(
         model_filename = config.EVALUATION_GEN + ".tar"
 
     torch.backends.cudnn.benchmark = True
-    gen = Generator(in_channels=3, features=64).to(config.DEVICE)
-    gen.eval()
-    opt_gen = optim.Adam(
-        gen.parameters(),
+    gen_G = Generator(in_channels=3, features=64).to(config.DEVICE)
+    gen_G.eval()
+    gen_F = Generator(in_channels=3, features=64).to(config.DEVICE)
+    gen_F.eval()
+    opt_gen = optim.Adam(itertools.chain(gen_G.parameters(), gen_F.parameters()),
         lr=config.LEARNING_RATE_GEN,
         betas=(config.GEN_BETA1, config.GEN_BETA2),
     )
@@ -170,7 +173,7 @@ def show_model_evo(filepath,BaseModelPath,start,tar):
 
     labels = ['Original']
 
-    original = BaseModelPath +".tar"
+    original = BaseModelPath +f"{start}.tar"
     out = gen_mount_img(filepath,original)
     outputs.append(out)
 
@@ -182,6 +185,7 @@ def show_model_evo(filepath,BaseModelPath,start,tar):
             labels +=   [f"epoch {i}"]
             
         except:
+           #if for some reason there was in issue in saving the checkpoint for that epoch it will just use the previous one 
            path = BaseModelPath+f"{i-15}.tar"
            labels +=  [f"epoch {i-15}"]
            pass
@@ -193,6 +197,8 @@ def show_model_evo(filepath,BaseModelPath,start,tar):
 
 
     plot_images(outputs,labels)
+
+    
     
 
 

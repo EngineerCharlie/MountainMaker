@@ -4,7 +4,7 @@ from matplotlib import pyplot
 
 # load the dataset
 path = "testDataUnfiltered/"
-data = load(path + "mountains_256.npz")
+data = load("C:/Users/nadee/Documents/Mountains/gen2_blur_mountains_Diego.npz")
 src_images, tar_images = data["arr_0"], data["arr_1"]
 print("Loaded: ", src_images.shape, tar_images.shape)
 # plot source images

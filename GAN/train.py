@@ -180,12 +180,14 @@ def run():
             save_checkpoint(
                 generator,
                 optimizer_gen,
-                filename=config.CHECKPOINT_GEN + str(epoch) + ".tar",
+                #filename=config.CHECKPOINT_GEN + str(epoch) + ".tar"
+                filename=config.CHECKPOINT_GEN + str(epoch) + "blur.tar",
             )
             save_checkpoint(
                 discriminator,
                 optimizer_disc,
-                filename=config.CHECKPOINT_DISC + str(epoch) + ".tar",
+                #filename=config.CHECKPOINT_DISC + str(epoch) + ".tar"
+                filename=config.CHECKPOINT_DISC + str(epoch) + "blur.tar",
             )
 
         save_some_examples(
