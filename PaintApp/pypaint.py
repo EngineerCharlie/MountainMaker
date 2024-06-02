@@ -309,7 +309,7 @@ class Paint:
 
                     if yp == -2 and xp == 0:  # MAKE MOUNTAIN
                         pygame.image.save(self.img, "my_mountain.png")
-                        # TODO: exit?
+                        self.running = False
                         pass
                     if yp == -2 and xp == 1:  # undo
                         if len(self.undo) >= 2:
