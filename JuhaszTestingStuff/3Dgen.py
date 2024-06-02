@@ -12,14 +12,14 @@ import open3d as o3d
 
 import NoiseGenerator as NG
 import CustomUtility as CU
-import ImageToPCD as F3D
+import ImageToPCD as ITPCD
 import InferBoundless as IB
 
 import cv2
 
 
 input_path = "C:/WorkingSets/3D/OriginalImages/"
-filename = "12.jpg"
+filename = "test2.jpg"
 
 original_img = cv2.imread((input_path + filename))
 original_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2RGB)
@@ -27,7 +27,7 @@ original_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2RGB)
 #original_img = IB.CreateInferModelInferation((input_path + filename), 2)
 #original_img = np.asarray(original_img*255, dtype=np.uint8)
 
-geom = F3D.GET_PCD(original_img, showGraphics=True)
+geom = ITPCD.GET_PCD(original_img, showGraphics=True)
 orig_pcd = geom[0]
 
 points = np.asarray(orig_pcd.points)
@@ -177,9 +177,10 @@ plt.show()
 
 heightmap_estimate[:] = heightmap_estimate[:]*10**9
 
-projected_pcd = NG.GetPCDfromTextureMap(heightmap, indicy_scale=5, Y_scale=1.25, customColors=False)
+#projected_pcd = NG.GetPCDfromTextureMap(heightmap, indicy_scale=5, Y_scale=1.25, customColors=False)
 
 projected_estimation_pcd = NG.GetPCDfromTextureMap(heightmap_estimate, indicy_scale=5, Y_scale=2.5, customColors=False)
+
 #projected_entire_pcd = NG.GetPCDfromTextureMap(image_result_flipped, indicy_scale=5, Z_scale=2, customColors=False)
 
 
@@ -226,7 +227,7 @@ o3d.visualization.draw_geometries([projected_estimation_pcd, orig_pcd])
 
 
 
-import JuhaszTestingStuff.PointCloudToMesh as PCTM
+#import PointCloudToMesh as PCTM
 
 #If you want mesh
 #PCTM.PCD_To_Mesh(orig_pcd)

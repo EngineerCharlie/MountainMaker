@@ -11,7 +11,16 @@ def Project_PCD_TO_MAP(pcdToProject, resolution=5):
     x_min, y_min, z_min = np.min(point_cloud[:, :3], axis=0)
     x_max, y_max, z_max = np.max(point_cloud[:, :3], axis=0)
 
-    num_cols = int((x_max - x_min) / resolution) + 1
+    #if X dim is larger the heightmap should be X*X
+    #if Z dim is larger the heightmap should be Z*Z
+    x_range = x_max-x_min
+    z_range = z_max-z_min
+    if(x_range > z_range):
+        num_cols = int(x_range / resolution) + 1
+    else:
+        num_cols = int(z_range / resolution) + 1
+
+    #print("Y range: ", (y_max-y_min))
 
     # Ensure a square heightmap by adjusting the number of rows
     num_rows = num_cols
