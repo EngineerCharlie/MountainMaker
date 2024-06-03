@@ -166,17 +166,19 @@ ra = []
 def fill2(surf, p, col):
     "Start flood fill at pos p"
     global ra
+    try:
+        orig = surf.get_at(p)
+        # check if target pixel already has the chosen color
+        if col == 256**2 * orig[0] + 256 * orig[1] + orig[2]:
+            return
 
-    orig = surf.get_at(p)
-    # check if target pixel already has the chosen color
-    if col == 256**2 * orig[0] + 256 * orig[1] + orig[2]:
-        return
-
-    ca = [surf.get_at((p[0], y)) for y in range(surf.get_height())]
-    top, bot = get_top(ca, orig, p[1]), get_bot(ca, orig, p[1])
-    ra.append((p[0], top, bot, 1, orig, col))
-    ra.append((p[0], top, bot, -1, orig, col))
-    pygame.draw.line(surf, col, (p[0], top), (p[0], bot))
+        ca = [surf.get_at((p[0], y)) for y in range(surf.get_height())]
+        top, bot = get_top(ca, orig, p[1]), get_bot(ca, orig, p[1])
+        ra.append((p[0], top, bot, 1, orig, col))
+        ra.append((p[0], top, bot, -1, orig, col))
+        pygame.draw.line(surf, col, (p[0], top), (p[0], bot))
+    except:
+        pass
 
 
 def do_fill(surf):
@@ -307,7 +309,7 @@ class Paint:
 
                     if yp == -2 and xp == 0:  # MAKE MOUNTAIN
                         pygame.image.save(self.img, "my_mountain.png")
-                        # TODO: exit?
+                        self.running = False
                         pass
                     if yp == -2 and xp == 1:  # undo
                         if len(self.undo) >= 2:
