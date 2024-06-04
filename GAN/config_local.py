@@ -1,14 +1,14 @@
 # Input your file paths  here
 
-TRAIN_DIR = "testDataUnfiltered/mountains_Diego.npz"
-VAL_DIR = "testDataUnfiltered/mountains_Diego.npz"
+TRAIN_DIR = "C:/Users/nadee/Downloads/mountains_Diego.npz"
+VAL_DIR = "C:/Users/nadee/Downloads/mountains_Diego.npz"
 
-CHECKPOINT_DISC = "output/output7/disc.pth"
-CHECKPOINT_GEN = "output/output7/gen.pth"
+CHECKPOINT_DISC = "output/disc.pth465"
+CHECKPOINT_GEN = "output/gen.pth465"
 
-LOAD_DISC = "output/output7/disc.pth210"
-LOAD_GEN = "output/output7/gen.pth210"
+LOAD_DISC = "output/disc.pth465"
+LOAD_GEN = "output/gen.pth465"
 
-EVALUATION_GEN = "output/output7/gen.pth225"
+EVALUATION_GEN = "output/gen.pth465"
 
-SAMPLE_FOLDER = "output/output7/samples/"
+SAMPLE_FOLDER = "C:/Users/nadee/Documents/Mountains/sample/"

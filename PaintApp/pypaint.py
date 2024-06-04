@@ -65,21 +65,30 @@ cols_j = [
 ]
 
 cols_dv = [
+    # Cool colours
     0x0D1B2A,
     0x1B263B,
     0x415A77,
     0x778DA9,
     0xE0E1DD,
+    # grey1
+    0x444444,
+    # Forest colours
     0x132A13,
     0x31572C,
     0x4F772D,
     0x90A955,
     0xECF39E,
+    # grey2
+    0x888888,
+    # Desert colours
     0x562A0E,
     0x78380C,
     0xC8691C,
     0xD09259,
     0xE4CEAF,
+    # grey3
+    0xBBBBBB,
 ]
 
 # palettes and palette names
@@ -90,7 +99,7 @@ palettes = [
 
 # palette rows
 num_colours = len(palettes[PALETTE_NUMBER][1])
-extra_row = -1 if num_colours % 3 == 0 else 1
+extra_row = 0 if num_colours % 3 == 0 else 1
 PALROWS = (num_colours // 3) + extra_row
 # tool names
 tname = [
@@ -157,17 +166,19 @@ ra = []
 def fill2(surf, p, col):
     "Start flood fill at pos p"
     global ra
+    try:
+        orig = surf.get_at(p)
+        # check if target pixel already has the chosen color
+        if col == 256**2 * orig[0] + 256 * orig[1] + orig[2]:
+            return
 
-    orig = surf.get_at(p)
-    # check if target pixel already has the chosen color
-    if col == 256**2 * orig[0] + 256 * orig[1] + orig[2]:
-        return
-
-    ca = [surf.get_at((p[0], y)) for y in range(surf.get_height())]
-    top, bot = get_top(ca, orig, p[1]), get_bot(ca, orig, p[1])
-    ra.append((p[0], top, bot, 1, orig, col))
-    ra.append((p[0], top, bot, -1, orig, col))
-    pygame.draw.line(surf, col, (p[0], top), (p[0], bot))
+        ca = [surf.get_at((p[0], y)) for y in range(surf.get_height())]
+        top, bot = get_top(ca, orig, p[1]), get_bot(ca, orig, p[1])
+        ra.append((p[0], top, bot, 1, orig, col))
+        ra.append((p[0], top, bot, -1, orig, col))
+        pygame.draw.line(surf, col, (p[0], top), (p[0], bot))
+    except:
+        pass
 
 
 def do_fill(surf):
@@ -298,7 +309,7 @@ class Paint:
 
                     if yp == -2 and xp == 0:  # MAKE MOUNTAIN
                         pygame.image.save(self.img, "my_mountain.png")
-                        # TODO: exit?
+                        self.running = False
                         pass
                     if yp == -2 and xp == 1:  # undo
                         if len(self.undo) >= 2:
