@@ -1,6 +1,7 @@
 import cv2
 import os
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 def read_image(image_path):
@@ -110,6 +111,14 @@ def process_image(image_path, output_folder):
     image_name = os.path.basename(image_path)
     output_path = os.path.join(output_folder, image_name)
     print(f"Saving processed image to: {output_path}")
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    axes[0].imshow(image)  # Display input image
+    axes[0].set_title("Generated Image")
+    axes[0].axis("off")
+    axes[1].imshow(final_img)  # Display output image
+    axes[1].set_title("Processed Image")
+    axes[1].axis("off")
+    plt.show()
     # Save the processed image
     save_image(final_img, output_path)
 
@@ -127,6 +136,7 @@ def batch_process_images(input_folder, output_folder):
 
 
 # Example usage
-input_folder = '/Users/diegovelotto/Documents/GitHub/MountainMaker/pre-processing-test/inp'
-output_folder = '/Users/diegovelotto/Documents/GitHub/MountainMaker/pre-processing-test/out'
-batch_process_images(input_folder, output_folder)
+def __main__():
+    input_folder = '/Users/diegovelotto/Documents/GitHub/MountainMaker/pre-processing-test/inp'
+    output_folder = '/Users/diegovelotto/Documents/GitHub/MountainMaker/pre-processing-test/out'
+    batch_process_images(input_folder, output_folder)
