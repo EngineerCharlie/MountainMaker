@@ -99,7 +99,7 @@ palettes = [
 
 # palette rows
 num_colours = len(palettes[PALETTE_NUMBER][1])
-extra_row = 0 if num_colours % 3 == 0 else 1
+extra_row = 0 if num_colours % 3 == 0 else 2
 PALROWS = (num_colours // 3) + extra_row
 # tool names
 tname = [

@@ -28,7 +28,7 @@ def generate_3d_model():
     filename = "generated_image.jpg"
 
     original_img = cv2.imread((input_path + filename))
-    original_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2RGB)
+    # original_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2RGB)
 
     # original_img = IB.CreateInferModelInferation((input_path + filename), 2)
     # original_img = np.asarray(original_img*255, dtype=np.uint8)
