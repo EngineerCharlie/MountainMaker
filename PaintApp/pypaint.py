@@ -93,7 +93,7 @@ cols_dv = [
 
 # palettes and palette names
 palettes = [
-    (cols_dv, "Sexy diego palette"),
+    (cols_dv, "Diego palette"),
     (cols_j, "Peak Juhasz"),
 ]
 

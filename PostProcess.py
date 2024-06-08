@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 def read_image(image_path):
     """Read an image from a file."""
     image = cv2.imread(image_path)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     if image is None:
         raise FileNotFoundError(f"Image not found: {image_path}")
     return image
